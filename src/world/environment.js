@@ -447,6 +447,76 @@ function buildStore(targetScene, store) {
   }, targetScene);
 }
 
+function addArcadeStoreDetails(targetScene) {
+  const arcadeStore = STORE_DEFINITIONS.find((store) => store.id === 'S3');
+
+  if (!arcadeStore) {
+    return;
+  }
+
+  const storePos = arcadeStore.position;
+
+  createBox({
+    w: 0.8,
+    h: 1.8,
+    d: 0.6,
+    x: storePos.x - 3,
+    y: 0.9,
+    z: storePos.z - 8,
+    color: 0x1a1040,
+    addToCollision: true,
+    castShadow: true,
+    receiveShadow: true,
+  }, targetScene);
+  createBox({
+    w: 0.5,
+    h: 0.4,
+    d: 0.05,
+    x: storePos.x - 3,
+    y: 1.2,
+    z: storePos.z - 7.7,
+    color: 0x0022ff,
+    addToCollision: false,
+    castShadow: false,
+    receiveShadow: false,
+  }, targetScene);
+
+  const screenLight1 = new THREE.PointLight(0x0022ff, 0.4, 2, 2);
+
+  screenLight1.position.set(storePos.x - 3, 1.2, storePos.z - 7.5);
+  environmentGroup.add(screenLight1);
+
+  createBox({
+    w: 0.8,
+    h: 1.8,
+    d: 0.6,
+    x: storePos.x + 3,
+    y: 0.9,
+    z: storePos.z - 8,
+    color: 0x1a1040,
+    addToCollision: true,
+    castShadow: true,
+    receiveShadow: true,
+  }, targetScene);
+  createBox({
+    w: 0.5,
+    h: 0.4,
+    d: 0.05,
+    x: storePos.x + 3,
+    y: 1.2,
+    z: storePos.z - 7.7,
+    color: 0x0033ff,
+    addToCollision: false,
+    castShadow: false,
+    receiveShadow: false,
+  }, targetScene);
+
+  const screenLight2 = new THREE.PointLight(0x0033ff, 0.4, 2, 2);
+
+  screenLight2.position.set(storePos.x + 3, 1.2, storePos.z - 7.5);
+  environmentGroup.add(screenLight2);
+}
+
 function buildKioskStore(targetScene, store) {
   const { x, z } = store.position;
   const accentOffset = store.id === 'S11' || store.id === 'S14' ? -0.4 : 0.4;
@@ -652,6 +722,7 @@ function initEnvironment(targetScene = defaultScene) {
   STORE_DEFINITIONS.forEach((store) => {
     buildStore(targetScene, store);
   });
+  addArcadeStoreDetails(targetScene);
   buildConnectingCorridors(targetScene);
   buildBoundaryGuards(targetScene);
 
