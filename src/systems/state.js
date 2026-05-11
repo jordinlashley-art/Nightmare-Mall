@@ -15,6 +15,8 @@ const GameState = {
   explosivesPlanted: false,
   isPaused: false,
   isInspecting: false,
+  flashlightOn: false,
+  flashlightVisible: false,
 };
 
 const ITEM_TYPES = {
