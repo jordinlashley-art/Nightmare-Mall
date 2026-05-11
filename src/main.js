@@ -4,6 +4,7 @@ import { initLighting, toggleFlashlight, updateLighting } from './core/lighting.
 import { renderer } from './core/renderer.js';
 import { scene } from './core/scene.js';
 import { initEnvironment } from './world/environment.js';
+import { initDemon, resetDemon, updateDemon } from './world/demon.js';
 import { getCurrentNearbyItem, initItemSpawns, updateItems } from './world/items.js';
 import {
   initHUD,
@@ -81,6 +82,7 @@ function animate() {
 
   if (!GameState.isPaused) {
     updateItems(delta);
+    updateDemon(delta);
   }
 
   if (!GameState.isInspecting && !GameState.isPaused) {
@@ -126,6 +128,8 @@ function startGameSystems() {
 
   if (gameSystemsStarted) {
     initEnvironment(scene);
+    initDemon();
+    resetDemon();
     initLighting();
     initItemSpawns();
     initPlayer(new THREE.Vector3(0, 1.7, 5));
@@ -142,6 +146,7 @@ function startGameSystems() {
   setupPauseNavigation();
   bindGameInputHandlers();
   initEnvironment(scene);
+  initDemon();
   initLighting();
   initItemSpawns();
   initPlayer(new THREE.Vector3(0, 1.7, 5));

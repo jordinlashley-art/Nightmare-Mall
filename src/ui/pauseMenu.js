@@ -1,5 +1,6 @@
 import { GameState, updateState } from '../systems/state.js';
 import { resetKeyboardState } from '../systems/input.js';
+import { resetDemon } from '../world/demon.js';
 import { initMainMenu, playEntryAnimation } from './mainMenu.js';
 import { closeInspectOverlay } from './overlay.js';
 
@@ -206,6 +207,7 @@ function confirmQuit() {
     }
 
     resetGameStateForMenu();
+    resetDemon();
     initMainMenu();
     playEntryAnimation();
     setElementFade(canvas, 1, 0);
