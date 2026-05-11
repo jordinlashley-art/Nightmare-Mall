@@ -8,6 +8,7 @@ const trackedKeys = new Set([
   'arrowdown',
   'arrowright',
   'e',
+  'tab',
   '1',
   '2',
   '3',
@@ -16,6 +17,7 @@ const trackedKeys = new Set([
 
 const keyboardState = {};
 const interactCallbacks = new Set();
+const inspectHoldCallbacks = new Set();
 const slotSelectCallbacks = new Set();
 const INTERACT_DEBOUNCE_MS = 500;
 let lastInteractAt = 0;
@@ -44,6 +46,16 @@ function handleKeydown(event) {
 
   setKeyState(event, true);
 
+  if (key === 'tab') {
+    event.preventDefault();
+
+    if (!event.repeat) {
+      inspectHoldCallbacks.forEach(({ openCallback }) => openCallback());
+    }
+
+    return;
+  }
+
   if (slotSelectCallbacks.size > 0 && key >= '1' && key <= '4') {
     slotSelectCallbacks.forEach((callback) => callback(Number(key) - 1));
   }
@@ -61,8 +73,21 @@ function handleKeydown(event) {
   interactCallbacks.forEach((callback) => callback());
 }
 
+function handleKeyup(event) {
+  const key = normalizeKey(event.key);
+
+  setKeyState(event, false);
+
+  if (key !== 'tab') {
+    return;
+  }
+
+  event.preventDefault();
+  inspectHoldCallbacks.forEach(({ closeCallback }) => closeCallback());
+}
+
 window.addEventListener('keydown', handleKeydown);
-window.addEventListener('keyup', (event) => setKeyState(event, false));
+window.addEventListener('keyup', handleKeyup);
 
 // Returns whether a tracked key is currently pressed.
 function isKeyPressed(key) {
@@ -87,4 +112,18 @@ function onSlotSelect(callback) {
   };
 }
 
-export { keyboardState, isKeyPressed, onInteract, onSlotSelect };
+// Registers callbacks for TAB hold inspection open and close events.
+function onInspectHold(openCallback, closeCallback) {
+  const callbacks = {
+    openCallback,
+    closeCallback,
+  };
+
+  inspectHoldCallbacks.add(callbacks);
+
+  return () => {
+    inspectHoldCallbacks.delete(callbacks);
+  };
+}
+
+export { keyboardState, isKeyPressed, onInspectHold, onInteract, onSlotSelect };

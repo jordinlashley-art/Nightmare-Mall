@@ -2,17 +2,16 @@ import { camera } from './core/camera.js';
 import { renderer } from './core/renderer.js';
 import { scene } from './core/scene.js';
 import { initEnvironment } from './world/environment.js';
-import { initHUD, updateFearMeter, updateStealthIndicator } from './ui/hud.js';
+import { initHUD, updateFearMeter, updateQuickSlots, updateStealthIndicator } from './ui/hud.js';
 import { initMenu } from './ui/menu.js';
 import {
-  hidePickupPrompt,
+  closeInspectOverlay,
   initOverlay,
-  showPickupPrompt,
-  triggerPickup,
+  openInspectOverlay,
   updateVignette,
 } from './ui/overlay.js';
-import { GameState } from './systems/state.js';
-import { onInteract } from './systems/input.js';
+import { GameState, updateState } from './systems/state.js';
+import { onInspectHold } from './systems/input.js';
 
 document.body.appendChild(renderer.domElement);
 
@@ -21,43 +20,29 @@ initHUD();
 initMenu();
 initOverlay();
 
-// TEMP TEST - remove before PROMPT 05
-// Simulates walking near an item after 2 seconds
-// Tests pickup, inventory full state, and hide behavior
-const testItems = [
-  'FLASHLIGHT',
-  'LIGHTER',
-  'RADIO',
-  'ROPE',
-  'MEDKIT',
-];
-let testItemIndex = 0;
+onInspectHold(
+  () => openInspectOverlay(),
+  () => closeInspectOverlay(),
+);
 
-setTimeout(() => {
-  showPickupPrompt(testItems[testItemIndex]);
-
-  onInteract(() => {
-    const success = triggerPickup(testItems[testItemIndex]);
-
-    if (success) {
-      testItemIndex++;
-
-      setTimeout(() => {
-        if (testItems[testItemIndex]) {
-          showPickupPrompt(testItems[testItemIndex]);
-        } else {
-          hidePickupPrompt();
-        }
-      }, 1000);
-    }
-  });
-}, 2000);
-// After 4 pickups inventory is full -
-// 5th item should show INVENTORY FULL state
+// TEMP TEST - remove before PROMPT 07
+// Pre-populate inventory for inspect testing.
+updateState({
+  inventory: ['FLASHLIGHT', 'RADIO', 'EXPLOSIVE'],
+  activeSlot: 0,
+});
+updateQuickSlots();
+// Hold TAB to inspect FLASHLIGHT (slot 1)
+// Press 2, hold TAB to inspect RADIO
+// Press 3, hold TAB to inspect EXPLOSIVE
+// Press 4 (empty slot), hold TAB - overlay should NOT open
 
 function animate() {
-  updateStealthIndicator();
-  updateFearMeter(GameState.fear);
+  if (!GameState.isInspecting) {
+    updateStealthIndicator();
+    updateFearMeter(GameState.fear);
+  }
+
   updateVignette(GameState.fear);
   renderer.render(scene, camera);
 }

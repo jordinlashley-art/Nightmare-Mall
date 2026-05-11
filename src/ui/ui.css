@@ -353,31 +353,42 @@ canvas {
 #inspect-overlay {
   position: fixed;
   inset: 0;
+  z-index: 200;
   display: flex;
   align-items: center;
   justify-content: center;
   padding: 32px;
-  background-color: rgba(2, 4, 8, 0.86);
-  background-image:
-    radial-gradient(circle at center, rgba(255, 240, 190, 0.08), transparent 36%),
-    linear-gradient(rgba(20, 12, 8, 0.3), rgba(2, 4, 8, 0.9)),
-    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160' viewBox='0 0 160 160'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.95' numOctaves='4' stitchTiles='stitch'/%3E%3CfeColorMatrix type='saturate' values='0'/%3E%3C/filter%3E%3Crect width='160' height='160' filter='url(%23noise)' opacity='0.42'/%3E%3C/svg%3E");
-  background-blend-mode: screen, normal, overlay;
+  background:
+    radial-gradient(circle at center, rgba(0, 255, 153, 0.08), transparent 36%),
+    rgba(0, 0, 0, 0.85);
+  backdrop-filter: blur(4px);
   opacity: 0;
   visibility: hidden;
   pointer-events: none;
   transition: opacity 0.4s ease;
-  z-index: 300;
+}
+
+#inspect-overlay::before {
+  position: absolute;
+  inset: 0;
+  content: '';
+  pointer-events: none;
+  background: rgba(255, 255, 255, 0.12);
+  filter: url(#noise);
+  mix-blend-mode: screen;
+  opacity: 0.22;
 }
 
 #inspect-content {
   position: relative;
-  width: min(440px, 100%);
-  min-height: 560px;
+  z-index: 1;
+  max-width: 480px;
+  width: 90%;
   display: flex;
   flex-direction: column;
   align-items: center;
-  padding: 56px 42px 34px;
+  gap: 16px;
+  padding: 48px 32px;
   border: 1px solid rgba(255, 244, 201, 0.2);
   box-shadow:
     0 0 70px rgba(255, 224, 140, 0.08),
@@ -414,10 +425,10 @@ canvas {
 #inspect-icon {
   position: relative;
   z-index: 1;
-  margin-bottom: 28px;
   font-size: 64px;
   line-height: 1;
-  filter: drop-shadow(0 0 20px rgba(255, 230, 160, 0.22));
+  filter: drop-shadow(0 0 20px rgba(0, 255, 153, 0.4));
+  animation: pulse-calm 2s ease-in-out infinite;
 }
 
 #inspect-name {
@@ -425,10 +436,10 @@ canvas {
   z-index: 1;
   max-width: 100%;
   min-height: 28px;
-  color: #f7edce;
-  font-size: 18px;
-  line-height: 1.5;
-  letter-spacing: 5px;
+  color: var(--color-text);
+  font-family: var(--font-primary);
+  font-size: 22px;
+  letter-spacing: 8px;
   text-align: center;
   text-transform: uppercase;
   text-shadow: 0 0 18px rgba(255, 226, 156, 0.25);
@@ -438,32 +449,37 @@ canvas {
 #inspect-divider {
   position: relative;
   z-index: 1;
-  width: 72%;
+  width: 100%;
   height: 1px;
-  margin: 18px 0 24px;
-  background: linear-gradient(90deg, transparent, rgba(247, 237, 206, 0.72), transparent);
+  background: linear-gradient(
+    to right,
+    transparent,
+    rgba(255, 255, 255, 0.2),
+    transparent
+  );
 }
 
 #inspect-description {
   position: relative;
   z-index: 1;
   width: 100%;
-  min-height: 126px;
-  color: rgba(247, 237, 206, 0.88);
-  font-size: 15px;
+  min-height: 80px;
+  color: var(--color-text);
+  font-family: var(--font-primary);
+  font-size: 14px;
   line-height: 1.8;
+  opacity: 0.75;
   letter-spacing: 1px;
-  text-align: left;
+  text-align: center;
   white-space: pre-wrap;
 }
 
 #inspect-meta {
   position: relative;
   z-index: 1;
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  width: 72%;
-  margin-top: 30px;
+  display: flex;
+  gap: 32px;
+  margin-top: 8px;
   border: 1px solid rgba(247, 237, 206, 0.24);
   background: rgba(0, 0, 0, 0.24);
 }
@@ -473,7 +489,7 @@ canvas {
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  min-height: 70px;
+  gap: 4px;
   padding: 12px;
 }
 
@@ -482,26 +498,30 @@ canvas {
 }
 
 .meta-label {
-  margin-bottom: 8px;
+  font-family: var(--font-primary);
   color: rgba(247, 237, 206, 0.48);
-  font-size: 10px;
-  letter-spacing: 4px;
+  font-size: 9px;
+  letter-spacing: 3px;
+  opacity: 0.4;
+  text-transform: uppercase;
 }
 
 .meta-value {
-  color: #f7edce;
+  font-family: var(--font-primary);
+  color: var(--color-safe);
   font-size: 16px;
-  letter-spacing: 3px;
+  letter-spacing: 2px;
 }
 
 #inspect-hint {
   position: relative;
   z-index: 1;
-  margin-top: auto;
-  padding-top: 34px;
-  color: rgba(247, 237, 206, 0.58);
-  font-size: 12px;
+  margin-top: 16px;
+  font-family: var(--font-primary);
+  font-size: 10px;
   letter-spacing: 3px;
+  opacity: 0.3;
+  animation: pulse-calm 2s ease-in-out infinite;
 }
 
 @keyframes pulse-calm {

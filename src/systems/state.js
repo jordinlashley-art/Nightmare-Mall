@@ -14,37 +14,37 @@ const ITEM_TYPES = {
   FLASHLIGHT: {
     name: 'FLASHLIGHT',
     icon: '🔦',
-    description: 'Cuts through darkness. Demons can see the beam.',
+    description: 'Cuts through the dark. But the beam is visible. They can see it too. Use sparingly.',
     stackable: false,
   },
   LIGHTER: {
     name: 'LIGHTER',
     icon: '🔥',
-    description: 'Small flame. Unreliable but silent.',
+    description: 'A small flame. Enough to read by. Not enough to run by. Silent, at least.',
     stackable: false,
   },
   RADIO: {
     name: 'RADIO',
     icon: '📻',
-    description: 'Creates noise. Use to distract.',
+    description: 'Still picks up a signal. Throw it to draw them away. One use. Make it count.',
     stackable: false,
   },
   ROPE: {
     name: 'ROPE',
     icon: '🪢',
-    description: 'Useful for climbing or binding.',
+    description: 'Thirty feet of hardware store rope. Could get you to a roof. Could get you out.',
     stackable: false,
   },
   MEDKIT: {
     name: 'MEDKIT',
     icon: '🩹',
-    description: 'Reduces fear. Limited uses.',
+    description: 'Bandages, antiseptic, something that might be a sedative. Fear fades when you focus on the wound.',
     stackable: false,
   },
   EXPLOSIVE: {
     name: 'EXPLOSIVE',
     icon: '💥',
-    description: 'The objective. Plant at the hell portal.',
+    description: 'This is it. This closes the portal. Plant it at the source and do not look back.',
     stackable: false,
   },
 };

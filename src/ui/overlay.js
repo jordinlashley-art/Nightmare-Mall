@@ -3,7 +3,8 @@ import { GameState, ITEM_TYPES, updateState } from '../systems/state.js';
 let pickupHideTimeout = null;
 let inspectTypewriterInterval = null;
 let inspectHideTimeout = null;
-let inspectInputBound = false;
+let inspectStateListenerBound = false;
+let cancelTypewriterRequested = false;
 
 function getHUD() {
   let hud = document.getElementById('hud');
@@ -92,17 +93,18 @@ function initInspectOverlay() {
     document.body.appendChild(inspectOverlay);
   }
 
-  if (!inspectInputBound) {
-    window.addEventListener('keydown', handleInspectKeydown);
-    window.addEventListener('keyup', handleInspectKeyup);
+  if (!inspectStateListenerBound) {
     window.addEventListener('game-state-updated', handleInspectStateUpdate);
-    inspectInputBound = true;
+    inspectStateListenerBound = true;
   }
 
   return inspectOverlay;
 }
 
-function cancelTypewriterEffect() {
+// Cancels any active item description typewriter animation.
+function cancelTypewriter() {
+  cancelTypewriterRequested = true;
+
   if (inspectTypewriterInterval) {
     window.clearInterval(inspectTypewriterInterval);
     inspectTypewriterInterval = null;
@@ -120,29 +122,6 @@ function getActiveInspectItem() {
     itemName,
     item: ITEM_TYPES[itemName],
   };
-}
-
-function handleInspectKeydown(event) {
-  if (event.key !== 'Tab') {
-    return;
-  }
-
-  event.preventDefault();
-
-  if (event.repeat) {
-    return;
-  }
-
-  openInspectOverlay();
-}
-
-function handleInspectKeyup(event) {
-  if (event.key !== 'Tab') {
-    return;
-  }
-
-  event.preventDefault();
-  closeInspectOverlay();
 }
 
 function handleInspectStateUpdate(event) {
@@ -167,21 +146,28 @@ function formatInspectName(name) {
 
 function typewriterEffect(text) {
   const description = document.getElementById('inspect-description');
+  const safeText = String(text);
   let characterIndex = 0;
 
   if (!description) {
     return;
   }
 
-  cancelTypewriterEffect();
+  cancelTypewriter();
+  cancelTypewriterRequested = false;
   description.textContent = '';
 
   inspectTypewriterInterval = window.setInterval(() => {
-    description.textContent += text.charAt(characterIndex);
+    if (cancelTypewriterRequested) {
+      cancelTypewriter();
+      return;
+    }
+
+    description.textContent += safeText.charAt(characterIndex);
     characterIndex++;
 
-    if (characterIndex >= text.length) {
-      cancelTypewriterEffect();
+    if (characterIndex >= safeText.length) {
+      cancelTypewriter();
     }
   }, 30);
 }
@@ -227,7 +213,7 @@ function openInspectOverlay() {
 function closeInspectOverlay() {
   const inspectOverlay = document.getElementById('inspect-overlay');
 
-  cancelTypewriterEffect();
+  cancelTypewriter();
   updateState({ isInspecting: false });
 
   if (!inspectOverlay) {
@@ -348,8 +334,9 @@ function triggerPickup(itemName) {
 }
 
 export {
-  hidePickupPrompt,
+  cancelTypewriter,
   closeInspectOverlay,
+  hidePickupPrompt,
   initInspectOverlay,
   initOverlay,
   initPickupPrompt,
