@@ -93,6 +93,40 @@ function triggerMenuOption() {
   }
 }
 
+function resetEntryAnimationState() {
+  const scanlines = document.getElementById('menu-scanlines');
+  const titleBlock = document.getElementById('menu-title-block');
+  const title = document.getElementById('menu-title');
+  const tagline = document.getElementById('menu-tagline');
+  const fog = document.getElementById('menu-fog');
+  const nav = document.getElementById('menu-nav');
+
+  if (taglineIntervalId) {
+    window.clearInterval(taglineIntervalId);
+    taglineIntervalId = null;
+  }
+
+  scanlines?.classList.remove('visible');
+  titleBlock?.classList.remove('visible', 'hidden');
+  title?.classList.remove('slam-in', 'chromatic');
+  fog?.classList.remove('active');
+  nav?.classList.remove('hidden');
+  document.querySelectorAll('.menu-subscreen').forEach((subscreen) => {
+    subscreen.classList.remove('active');
+  });
+  getMenuOptions().forEach((option) => {
+    option.classList.remove('visible', 'selected', 'dimmed');
+  });
+
+  if (tagline) {
+    tagline.textContent = '';
+  }
+
+  if (title) {
+    void title.offsetWidth;
+  }
+}
+
 function handleKeydown(event) {
   if (event.key === 'Escape' && currentMenuState !== 'MAIN') {
     event.preventDefault();
@@ -264,6 +298,7 @@ function playEntryAnimation() {
   menuInteractive = false;
   currentMenuState = 'MAIN';
   selectedIndex = 0;
+  resetEntryAnimationState();
 
   window.setTimeout(() => {
     scanlines?.classList.add('visible');

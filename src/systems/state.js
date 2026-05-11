@@ -13,6 +13,7 @@ const GameState = {
   objective: null,
   isAlive: true,
   explosivesPlanted: false,
+  isPaused: false,
   isInspecting: false,
 };
 

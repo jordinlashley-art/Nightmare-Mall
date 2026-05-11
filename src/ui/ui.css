@@ -376,6 +376,142 @@ canvas {
   animation: pulse-calm 2s ease-in-out infinite;
 }
 
+#pause-menu {
+  position: fixed;
+  inset: 0;
+  z-index: 450;
+  display: none;
+  align-items: center;
+  justify-content: center;
+  pointer-events: none;
+}
+
+#pause-menu.active {
+  display: flex;
+  pointer-events: all;
+}
+
+#pause-overlay {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  background: rgba(5, 3, 2, 0.75);
+  backdrop-filter: blur(6px);
+}
+
+#pause-scanlines {
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+  background: repeating-linear-gradient(
+    0deg,
+    transparent,
+    transparent 2px,
+    rgba(0, 0, 0, 0.12) 2px,
+    rgba(0, 0, 0, 0.12) 4px
+  );
+  opacity: 0.6;
+  pointer-events: none;
+}
+
+#pause-content {
+  position: relative;
+  z-index: 3;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 32px;
+  min-width: 320px;
+  padding: 48px 40px;
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  background: rgba(0, 0, 0, 0.4);
+  transform-origin: center center;
+}
+
+#pause-title {
+  color: var(--color-text);
+  font-family: var(--font-primary);
+  font-size: 32px;
+  letter-spacing: 16px;
+  text-align: center;
+  opacity: 0.9;
+}
+
+#pause-nav {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+}
+
+#pause-nav.hidden {
+  display: none;
+}
+
+.pause-option {
+  display: flex;
+  gap: 8px;
+  padding: 6px 20px;
+  color: var(--color-text);
+  font-family: var(--font-primary);
+  font-size: 16px;
+  letter-spacing: 6px;
+  cursor: pointer;
+  opacity: 0.4;
+  transition: all 0.15s ease;
+}
+
+.pause-option.selected {
+  color: var(--color-safe);
+  text-shadow: 0 0 16px rgba(0, 255, 153, 0.35);
+  opacity: 1;
+}
+
+.pause-option.selected .option-bracket {
+  color: var(--color-safe);
+  opacity: 1;
+}
+
+.pause-option.dimmed {
+  opacity: 0.2;
+}
+
+.pause-subscreen {
+  display: none;
+  flex-direction: column;
+  align-items: center;
+  gap: 24px;
+  width: 100%;
+}
+
+.pause-subscreen.active {
+  display: flex;
+}
+
+#quit-confirm-text {
+  color: var(--color-danger);
+  font-family: var(--font-primary);
+  font-size: 20px;
+  letter-spacing: 6px;
+  text-align: center;
+}
+
+#quit-confirm-sub {
+  margin-top: -16px;
+  font-family: var(--font-primary);
+  font-size: 11px;
+  letter-spacing: 3px;
+  text-align: center;
+  opacity: 0.4;
+}
+
+#quit-confirm-actions {
+  display: flex;
+  gap: 24px;
+  margin-top: 8px;
+}
+
 #hud {
   position: fixed;
   inset: 0;
