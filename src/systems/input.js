@@ -11,6 +11,9 @@ const trackedKeys = new Set([
 ]);
 
 const keyboardState = {};
+const interactCallbacks = new Set();
+const INTERACT_DEBOUNCE_MS = 500;
+let lastInteractAt = 0;
 
 trackedKeys.forEach((key) => {
   keyboardState[key] = false;
@@ -30,11 +33,40 @@ function setKeyState(event, isPressed) {
   keyboardState[key] = isPressed;
 }
 
-window.addEventListener('keydown', (event) => setKeyState(event, true));
+function handleKeydown(event) {
+  const key = normalizeKey(event.key);
+  const now = Date.now();
+
+  setKeyState(event, true);
+
+  if (
+    key !== 'e'
+    || event.repeat
+    || interactCallbacks.size === 0
+    || now - lastInteractAt < INTERACT_DEBOUNCE_MS
+  ) {
+    return;
+  }
+
+  lastInteractAt = now;
+  interactCallbacks.forEach((callback) => callback());
+}
+
+window.addEventListener('keydown', handleKeydown);
 window.addEventListener('keyup', (event) => setKeyState(event, false));
 
+// Returns whether a tracked key is currently pressed.
 function isKeyPressed(key) {
   return Boolean(keyboardState[normalizeKey(key)]);
 }
 
-export { keyboardState, isKeyPressed };
+// Registers a callback for debounced interact key presses.
+function onInteract(callback) {
+  interactCallbacks.add(callback);
+
+  return () => {
+    interactCallbacks.delete(callback);
+  };
+}
+
+export { keyboardState, isKeyPressed, onInteract };

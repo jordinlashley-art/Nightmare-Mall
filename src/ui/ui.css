@@ -184,6 +184,74 @@ canvas {
   background: var(--color-danger);
 }
 
+#pickup-prompt {
+  position: fixed;
+  top: 65%;
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  opacity: 0;
+  visibility: hidden;
+  transition: opacity 0.3s ease;
+  pointer-events: none;
+  z-index: 100;
+}
+
+#pickup-key {
+  width: 32px;
+  height: 32px;
+  border: 1.5px solid rgba(255, 255, 255, 0.6);
+  border-radius: 6px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: var(--font-primary);
+  font-size: 14px;
+  color: var(--color-text);
+  background: rgba(0, 0, 0, 0.5);
+  animation: pulse-calm 2s ease-in-out infinite;
+}
+
+#pickup-text {
+  display: flex;
+  gap: 8px;
+  font-family: var(--font-primary);
+  font-size: 14px;
+  letter-spacing: 2px;
+}
+
+#pickup-verb {
+  color: var(--color-text);
+  opacity: 0.7;
+}
+
+#pickup-item-name {
+  color: var(--color-safe);
+  text-transform: uppercase;
+}
+
+#pickup-inventory-warning {
+  font-size: 10px;
+  color: var(--color-warning);
+  letter-spacing: 3px;
+  margin-top: 4px;
+}
+
+#pickup-prompt.full #pickup-key {
+  animation: none;
+  opacity: 0.4;
+}
+
+#pickup-prompt.full #pickup-item-name {
+  color: var(--color-warning);
+}
+
+#pickup-prompt.pickup-flash {
+  animation: pickup-flash 0.4s ease;
+}
+
 #vignette {
   position: fixed;
   inset: 0;
@@ -249,6 +317,20 @@ canvas {
   100% {
     opacity: 1;
     transform: translateX(0);
+  }
+}
+
+@keyframes pickup-flash {
+  0% {
+    background: rgba(0, 255, 153, 0);
+  }
+
+  30% {
+    background: rgba(0, 255, 153, 0.15);
+  }
+
+  100% {
+    background: rgba(0, 255, 153, 0);
   }
 }
 
