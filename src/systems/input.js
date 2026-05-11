@@ -1,6 +1,5 @@
 import { GameState, updateState } from './state.js';
 import { updateQuickSlots } from '../ui/hud.js';
-import { getCurrentNearbyItem } from '../world/items.js';
 import { getPlayerPosition } from './player.js';
 
 const trackedKeys = new Set([
@@ -119,7 +118,6 @@ function handleKeydown(event) {
     || event.repeat
     || interactCallbacks.size === 0
     || now - lastInteractAt < INTERACT_DEBOUNCE_MS
-    || !getCurrentNearbyItem()
   ) {
     return;
   }

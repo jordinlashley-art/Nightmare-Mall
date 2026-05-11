@@ -257,13 +257,15 @@ function updateVignette(fearValue) {
   }
 }
 
-// Shows the pickup prompt for an item or an inventory-full warning.
-function showPickupPrompt(itemName) {
+// Shows the pickup prompt for an item, custom action, or dim proximity hint.
+function showPickupPrompt(itemName, verb = 'Pick up') {
   const pickupPrompt = initPickupPrompt();
   const pickupVerb = document.getElementById('pickup-verb');
   const pickupItemName = document.getElementById('pickup-item-name');
   const pickupInventoryWarning = document.getElementById('pickup-inventory-warning');
   const inventoryFull = GameState.inventory.length >= 4;
+  const isHint = verb === '';
+  const isCustomAction = verb !== 'Pick up';
 
   if (pickupHideTimeout) {
     window.clearTimeout(pickupHideTimeout);
@@ -272,8 +274,9 @@ function showPickupPrompt(itemName) {
 
   pickupPrompt.style.transitionDuration = '0.3s';
   pickupPrompt.style.visibility = 'visible';
+  pickupPrompt.classList.toggle('hint', isHint);
 
-  if (inventoryFull) {
+  if (inventoryFull && !isCustomAction) {
     pickupPrompt.classList.add('full');
     pickupInventoryWarning.textContent = 'INVENTORY FULL';
     pickupVerb.textContent = 'Cannot pick up';
@@ -281,7 +284,7 @@ function showPickupPrompt(itemName) {
   } else {
     pickupPrompt.classList.remove('full');
     pickupInventoryWarning.textContent = '';
-    pickupVerb.textContent = 'Pick up';
+    pickupVerb.textContent = verb;
     pickupItemName.textContent = itemName;
   }
 

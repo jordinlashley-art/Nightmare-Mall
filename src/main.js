@@ -5,7 +5,8 @@ import { renderer } from './core/renderer.js';
 import { scene } from './core/scene.js';
 import { initEnvironment } from './world/environment.js';
 import { initDemon, resetDemon, updateDemon } from './world/demon.js';
-import { getCurrentNearbyItem, initItemSpawns, updateItems } from './world/items.js';
+import { initItemSpawns, updateItems } from './world/items.js';
+import { initPortal, resetPortal, updatePortal } from './world/portal.js';
 import {
   initHUD,
   setActiveSlot,
@@ -26,7 +27,6 @@ import {
   initEndScreens,
   initRunStats,
   isDeathScreenActive,
-  isWinScreenActive,
   runStats,
   setupEndNavigation,
   triggerDeathScreen,
@@ -38,7 +38,7 @@ import {
   openPauseMenu,
   setupPauseNavigation,
 } from './ui/pauseMenu.js';
-import { initPlantUI, startPlantSequence } from './ui/plantUI.js';
+import { initPlantUI } from './ui/plantUI.js';
 import { initPlayer, updatePlayer } from './systems/player.js';
 import { GameState, updateState } from './systems/state.js';
 import {
@@ -49,7 +49,6 @@ import {
 import {
   onFlashlightToggle,
   onInspectHold,
-  onInteract,
   onRadioUse,
   onSlotSelect,
 } from './systems/input.js';
@@ -76,10 +75,6 @@ function animate() {
     triggerDeathScreen();
   }
 
-  if (GameState.explosivesPlanted === true && !isWinScreenActive() && !isDeathScreenActive()) {
-    triggerWinScreen();
-  }
-
   updatePlayer(delta);
   updateLighting(delta);
 
@@ -87,6 +82,7 @@ function animate() {
     updateItems(delta);
     updateDetection(delta);
     updateDemon(delta);
+    updatePortal(delta);
   }
 
   updateObjectiveTracker();
@@ -104,13 +100,6 @@ function bindGameInputHandlers() {
     () => closeInspectOverlay(),
   );
   onSlotSelect(setActiveSlot);
-  onInteract(() => {
-    if (getCurrentNearbyItem()) {
-      return;
-    }
-
-    startPlantSequence();
-  });
   onFlashlightToggle(() => toggleFlashlight());
   onRadioUse((position) => triggerRadioDistraction(position));
 }
@@ -126,6 +115,7 @@ function startGameSystems() {
     initDemon();
     resetDemon();
     initLighting();
+    resetPortal();
     initItemSpawns();
     initPlayer(new THREE.Vector3(0, 1.7, 5));
     initDetection();
@@ -144,6 +134,7 @@ function startGameSystems() {
   initEnvironment(scene);
   initDemon();
   initLighting();
+  initPortal();
   initItemSpawns();
   initPlayer(new THREE.Vector3(0, 1.7, 5));
   initDetection();

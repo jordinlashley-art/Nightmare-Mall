@@ -1307,6 +1307,20 @@ canvas {
   color: var(--color-warning);
 }
 
+#pickup-prompt.hint #pickup-key {
+  display: none;
+}
+
+#pickup-prompt.hint #pickup-text {
+  color: var(--color-warning);
+  opacity: 0.45;
+}
+
+#pickup-prompt.hint #pickup-item-name {
+  color: var(--color-warning);
+  text-transform: none;
+}
+
 #pickup-prompt.pickup-flash {
   animation: pickup-flash 0.4s ease;
 }
