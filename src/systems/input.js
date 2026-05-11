@@ -1,5 +1,7 @@
-import { GameState } from './state.js';
+import { GameState, updateState } from './state.js';
+import { updateQuickSlots } from '../ui/hud.js';
 import { getCurrentNearbyItem } from '../world/items.js';
+import { getPlayerPosition } from './player.js';
 
 const trackedKeys = new Set([
   'w',
@@ -14,6 +16,7 @@ const trackedKeys = new Set([
   'c',
   'e',
   'f',
+  'r',
   'tab',
   '1',
   '2',
@@ -27,6 +30,7 @@ const inspectHoldCallbacks = new Set();
 const slotSelectCallbacks = new Set();
 const crouchToggleCallbacks = new Set();
 const flashlightToggleCallbacks = new Set();
+const radioUseCallbacks = new Set();
 const INTERACT_DEBOUNCE_MS = 500;
 let lastInteractAt = 0;
 
@@ -95,6 +99,19 @@ function handleKeydown(event) {
 
   if (key === 'f' && !event.repeat) {
     flashlightToggleCallbacks.forEach((callback) => callback());
+  }
+
+  if (key === 'r' && !event.repeat) {
+    const activeItem = GameState.inventory[GameState.activeSlot];
+
+    if (activeItem === 'RADIO' && GameState.inventory.includes('RADIO')) {
+      event.preventDefault();
+      radioUseCallbacks.forEach((callback) => callback(getPlayerPosition()));
+      updateState({
+        inventory: GameState.inventory.filter((item) => item !== 'RADIO'),
+      });
+      updateQuickSlots();
+    }
   }
 
   if (
@@ -182,12 +199,22 @@ function onFlashlightToggle(callback) {
   };
 }
 
+// Registers a callback for one-shot radio use key presses.
+function onRadioUse(callback) {
+  radioUseCallbacks.add(callback);
+
+  return () => {
+    radioUseCallbacks.delete(callback);
+  };
+}
+
 export {
   keyboardState,
   isKeyPressed,
   onFlashlightToggle,
   onInspectHold,
   onInteract,
+  onRadioUse,
   onSlotSelect,
   registerCrouchToggle,
   resetKeyboardState,

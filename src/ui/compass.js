@@ -1,5 +1,4 @@
 import { GameState, updateState } from '../systems/state.js';
-import { updateFearMeter } from './hud.js';
 
 const DIRECTIONS = ['north', 'south', 'east', 'west'];
 const TIER_CLASSES = ['threat-low', 'threat-med', 'threat-high'];
@@ -95,17 +94,6 @@ function fireInwardPulse(indicator, direction) {
   }, 600);
 }
 
-function applyFearBleed(highThreatCount) {
-  if (highThreatCount === 0) {
-    return;
-  }
-
-  const nextFear = Math.min(100, GameState.fear + (0.3 * highThreatCount));
-
-  updateState({ fear: nextFear });
-  updateFearMeter(nextFear);
-}
-
 // Initializes the proximity danger compass indicators.
 function initCompass() {
   const hud = getHUDContainer();
@@ -141,17 +129,11 @@ function initCompass() {
 
 // Updates compass indicators from current demon proximity levels.
 function updateCompass() {
-  let highThreatCount = 0;
-
   DIRECTIONS.forEach((direction) => {
     const indicator = document.getElementById(`compass-${direction}`);
     const distance = indicator?.querySelector('.compass-distance');
     const threat = clampThreat(GameState.demonProximity?.[direction] ?? 0);
     const tier = getThreatTier(threat);
-
-    if (tier === 'HIGH') {
-      highThreatCount++;
-    }
 
     if (!indicator || !distance) {
       return;
@@ -179,8 +161,6 @@ function updateCompass() {
 
     prevTiers[direction] = tier;
   });
-
-  applyFearBleed(highThreatCount);
 }
 
 // Sets demon proximity values and refreshes the danger compass.

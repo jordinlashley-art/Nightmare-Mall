@@ -9,11 +9,9 @@ import { getCurrentNearbyItem, initItemSpawns, updateItems } from './world/items
 import {
   initHUD,
   setActiveSlot,
-  updateFearMeter,
   updateObjectiveTracker,
-  updateStealthIndicator,
 } from './ui/hud.js';
-import { initCompass, updateCompass } from './ui/compass.js';
+import { initCompass } from './ui/compass.js';
 import {
   initMainMenu,
   playEntryAnimation,
@@ -23,7 +21,6 @@ import {
   closeInspectOverlay,
   initOverlay,
   openInspectOverlay,
-  updateVignette,
 } from './ui/overlay.js';
 import {
   initEndScreens,
@@ -45,9 +42,15 @@ import { initPlantUI, startPlantSequence } from './ui/plantUI.js';
 import { initPlayer, updatePlayer } from './systems/player.js';
 import { GameState, updateState } from './systems/state.js';
 import {
+  initDetection,
+  triggerRadioDistraction,
+  updateDetection,
+} from './systems/detection.js';
+import {
   onFlashlightToggle,
   onInspectHold,
   onInteract,
+  onRadioUse,
   onSlotSelect,
 } from './systems/input.js';
 
@@ -82,19 +85,10 @@ function animate() {
 
   if (!GameState.isPaused) {
     updateItems(delta);
+    updateDetection(delta);
     updateDemon(delta);
   }
 
-  if (!GameState.isInspecting && !GameState.isPaused) {
-    updateStealthIndicator();
-    updateFearMeter(GameState.fear);
-  }
-
-  if (!GameState.isPaused) {
-    updateCompass();
-  }
-
-  updateVignette(GameState.fear);
   updateObjectiveTracker();
   renderer.render(scene, camera);
 }
@@ -118,6 +112,7 @@ function bindGameInputHandlers() {
     startPlantSequence();
   });
   onFlashlightToggle(() => toggleFlashlight());
+  onRadioUse((position) => triggerRadioDistraction(position));
 }
 
 // Initializes HUD, overlays, input handlers, and the render loop after START.
@@ -133,6 +128,7 @@ function startGameSystems() {
     initLighting();
     initItemSpawns();
     initPlayer(new THREE.Vector3(0, 1.7, 5));
+    initDetection();
     lastTime = performance.now();
     return;
   }
@@ -150,6 +146,7 @@ function startGameSystems() {
   initLighting();
   initItemSpawns();
   initPlayer(new THREE.Vector3(0, 1.7, 5));
+  initDetection();
   lastTime = performance.now();
 
   if (!animationLoopStarted) {
