@@ -35,28 +35,28 @@ export const DETECTION_CONFIG = {
   proximityCritical: 4,
 
   fearBleedDistant: 0,
-  fearBleedNear: 0.05,
-  fearBleedClose: 0.15,
-  fearBleedCritical: 0.4,
+  fearBleedNear: 0.03,
+  fearBleedClose: 0.08,
+  fearBleedCritical: 0.2,
 
-  visionAnglePatrol: Math.PI / 3,
+  visionAnglePatrol: Math.PI / 4,
   visionAngleAlerted: Math.PI / 2,
   visionAngleHunting: Math.PI * 2 / 3,
 
-  visionRangePatrol: 12,
-  visionRangeAlerted: 18,
-  visionRangeHunting: 25,
+  visionRangePatrol: 9,
+  visionRangeAlerted: 14,
+  visionRangeHunting: 20,
 
-  soundRadiusWalk: 8,
-  soundRadiusSprint: 15,
+  soundRadiusWalk: 5,
+  soundRadiusSprint: 11,
   soundRadiusCrouch: 2,
-  soundRadiusFlash: 20,
+  soundRadiusFlash: 14,
   soundRadiusRadio: 30,
 
-  detectionRiseRate: 8,
-  detectionFallRate: 5,
-  outOfSightTimeout: 3.0,
-  radioDistractTime: 6.0,
+  detectionRiseRate: 5,
+  detectionFallRate: 6,
+  outOfSightTimeout: 2.0,
+  radioDistractTime: 8.0,
 
   flashlightRangeMultiplier: 2.0,
 };

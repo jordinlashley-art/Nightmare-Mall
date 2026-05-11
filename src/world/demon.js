@@ -11,17 +11,17 @@ const ALERT_PAUSE_TIME = 0.5;
 export const DEMON_CONFIG = {
   id: 'demon-stalker',
   variantName: 'STALKER',
-  patrolSpeed: 2.5,
-  alertedSpeed: 4.0,
-  huntingSpeed: 6.0,
+  patrolSpeed: 1.8,
+  alertedSpeed: 2.8,
+  huntingSpeed: 4.2,
   turnSpeed: 3.0,
   arrivalThreshold: 1.0,
-  catchDistance: 0.8,
-  alertTimeout: 8.0,
+  catchDistance: 0.6,
+  alertTimeout: 12.0,
   huntLostTime: 3.0,
-  idleChance: 0.2,
-  idleMinTime: 1.0,
-  idleMaxTime: 3.0,
+  idleChance: 0.3,
+  idleMinTime: 1.5,
+  idleMaxTime: 4.5,
   startPosition: new THREE.Vector3(40, 0, 40),
   meshScale: 1,
   audioWeight: 1,
@@ -324,12 +324,12 @@ function checkPassiveStimuli(state, playerPosition, distToPlayer) {
 
   const playerState = getPlayerState();
 
-  if (playerState.isSprinting && distToPlayer <= 15) {
+  if (playerState.isSprinting && distToPlayer <= 11) {
     alertDemon(playerPosition);
     return;
   }
 
-  if (GameState.flashlightVisible && distToPlayer <= 20) {
+  if (GameState.flashlightVisible && distToPlayer <= 14) {
     alertDemon(playerPosition);
   }
 }
