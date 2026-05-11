@@ -9,6 +9,8 @@ const trackedKeys = new Set([
   'arrowleft',
   'arrowdown',
   'arrowright',
+  'shift',
+  'c',
   'e',
   'tab',
   '1',
@@ -21,6 +23,7 @@ const keyboardState = {};
 const interactCallbacks = new Set();
 const inspectHoldCallbacks = new Set();
 const slotSelectCallbacks = new Set();
+const crouchToggleCallbacks = new Set();
 const INTERACT_DEBOUNCE_MS = 500;
 let lastInteractAt = 0;
 
@@ -81,6 +84,10 @@ function handleKeydown(event) {
 
   if (slotSelectCallbacks.size > 0 && key >= '1' && key <= '4') {
     slotSelectCallbacks.forEach((callback) => callback(Number(key) - 1));
+  }
+
+  if (key === 'c' && !event.repeat) {
+    crouchToggleCallbacks.forEach((callback) => callback());
   }
 
   if (
@@ -149,11 +156,21 @@ function onInspectHold(openCallback, closeCallback) {
   };
 }
 
+// Registers a callback for crouch toggle key presses.
+function registerCrouchToggle(callback) {
+  crouchToggleCallbacks.add(callback);
+
+  return () => {
+    crouchToggleCallbacks.delete(callback);
+  };
+}
+
 export {
   keyboardState,
   isKeyPressed,
   onInspectHold,
   onInteract,
   onSlotSelect,
+  registerCrouchToggle,
   resetKeyboardState,
 };

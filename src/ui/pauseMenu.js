@@ -32,6 +32,18 @@ function getGameCanvas() {
   return document.querySelector('canvas');
 }
 
+function requestGamePointerLock() {
+  const canvas = getGameCanvas();
+
+  if (canvas && document.pointerLockElement !== canvas) {
+    const lockRequest = canvas.requestPointerLock();
+
+    if (lockRequest?.catch) {
+      lockRequest.catch(() => {});
+    }
+  }
+}
+
 function isMainMenuVisible() {
   const mainMenu = document.getElementById('main-menu');
 
@@ -433,6 +445,7 @@ function closePauseMenu() {
   clearPauseTimers();
   updateState({ isPaused: false });
   resetKeyboardState();
+  requestGamePointerLock();
   playContentAnimation(0.96, 0, EXIT_DURATION_MS, 'ease-in');
 
   exitTimeoutId = window.setTimeout(() => {

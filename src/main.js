@@ -1,3 +1,4 @@
+import * as THREE from 'three';
 import { camera } from './core/camera.js';
 import { renderer } from './core/renderer.js';
 import { scene } from './core/scene.js';
@@ -38,12 +39,14 @@ import {
   setupPauseNavigation,
 } from './ui/pauseMenu.js';
 import { initPlantUI, startPlantSequence } from './ui/plantUI.js';
+import { initPlayer, updatePlayer } from './systems/player.js';
 import { GameState, updateState } from './systems/state.js';
 import { onInspectHold, onInteract, onSlotSelect } from './systems/input.js';
 
 let animationLoopStarted = false;
 let gameSystemsStarted = false;
 let inputHandlersBound = false;
+let lastTime = performance.now();
 
 document.body.appendChild(renderer.domElement);
 
@@ -56,6 +59,11 @@ setupMenuNavigation();
 playEntryAnimation();
 
 function animate() {
+  const now = performance.now();
+  const delta = (now - lastTime) / 1000;
+
+  lastTime = now;
+
   if (GameState.isAlive === false && !isDeathScreenActive()) {
     triggerDeathScreen();
   }
@@ -63,6 +71,8 @@ function animate() {
   if (GameState.explosivesPlanted === true && !isWinScreenActive() && !isDeathScreenActive()) {
     triggerWinScreen();
   }
+
+  updatePlayer(delta);
 
   if (!GameState.isInspecting && !GameState.isPaused) {
     updateStealthIndicator();
@@ -101,6 +111,8 @@ function startGameSystems() {
   initRunStats();
 
   if (gameSystemsStarted) {
+    initPlayer(new THREE.Vector3(0, 1.7, 5));
+    lastTime = performance.now();
     return;
   }
 
@@ -112,6 +124,8 @@ function startGameSystems() {
   initPauseMenu();
   setupPauseNavigation();
   bindGameInputHandlers();
+  initPlayer(new THREE.Vector3(0, 1.7, 5));
+  lastTime = performance.now();
 
   if (!animationLoopStarted) {
     renderer.setAnimationLoop(animate);

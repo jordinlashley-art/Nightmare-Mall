@@ -812,6 +812,26 @@ canvas {
   display: none;
 }
 
+#pointer-hint {
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  z-index: 90;
+  color: var(--color-text);
+  font-family: var(--font-primary);
+  font-size: 13px;
+  letter-spacing: 5px;
+  opacity: 0.45;
+  pointer-events: none;
+  transform: translate(-50%, -50%);
+  transition: opacity 0.3s ease;
+  animation: pulse-calm 2s ease-in-out infinite;
+}
+
+#pointer-hint.hidden {
+  opacity: 0;
+}
+
 #compass {
   position: fixed;
   inset: 0;
