@@ -2,15 +2,9 @@ import * as THREE from 'three';
 import { camera } from '../core/camera.js';
 import { scene } from '../core/scene.js';
 import { openPauseMenu } from '../ui/pauseMenu.js';
+import { collisionObjects, getMallBounds } from '../world/environment.js';
 import { isKeyPressed, registerCrouchToggle } from './input.js';
 import { GameState, updateState } from './state.js';
-
-const PLAYER_BOUNDS = {
-  minX: -45,
-  maxX: 45,
-  minZ: -45,
-  maxZ: 45,
-};
 
 let canvas = null;
 let isLocked = false;
@@ -55,15 +49,34 @@ function getHUD() {
   return hud;
 }
 
-function clampPositionToBounds() {
-  playerState.position.x = Math.min(
-    PLAYER_BOUNDS.maxX,
-    Math.max(PLAYER_BOUNDS.minX, playerState.position.x),
+function isWithinMallBounds(position) {
+  const bounds = getMallBounds();
+
+  return position.x >= bounds.minX
+    && position.x <= bounds.maxX
+    && position.z >= bounds.minZ
+    && position.z <= bounds.maxZ;
+}
+
+function checkCollision(newPosition) {
+  if (!isWithinMallBounds(newPosition)) {
+    return true;
+  }
+
+  const playerBox = new THREE.Box3(
+    new THREE.Vector3(
+      newPosition.x - 0.4,
+      newPosition.y - playerState.currentHeight,
+      newPosition.z - 0.4,
+    ),
+    new THREE.Vector3(
+      newPosition.x + 0.4,
+      newPosition.y + 0.3,
+      newPosition.z + 0.4,
+    ),
   );
-  playerState.position.z = Math.min(
-    PLAYER_BOUNDS.maxZ,
-    Math.max(PLAYER_BOUNDS.minZ, playerState.position.z),
-  );
+
+  return collisionObjects.some((object) => playerBox.intersectsBox(object.box));
 }
 
 function injectPointerHint() {
@@ -264,8 +277,18 @@ function updatePlayer(delta) {
   }
 
   playerState.velocity.copy(moveDir);
-  playerState.position.add(moveDir);
-  clampPositionToBounds();
+
+  const nextX = playerState.position.clone().add(new THREE.Vector3(moveDir.x, 0, 0));
+
+  if (!checkCollision(nextX)) {
+    playerState.position.x = nextX.x;
+  }
+
+  const nextZ = playerState.position.clone().add(new THREE.Vector3(0, 0, moveDir.z));
+
+  if (!checkCollision(nextZ)) {
+    playerState.position.z = nextZ.z;
+  }
 
   if (playerState.isSprinting) {
     updateState({

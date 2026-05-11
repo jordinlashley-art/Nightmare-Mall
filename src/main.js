@@ -50,9 +50,6 @@ let lastTime = performance.now();
 
 document.body.appendChild(renderer.domElement);
 
-initEnvironment(scene);
-renderer.render(scene, camera);
-
 document.getElementById('hud').style.opacity = '0';
 initMainMenu();
 setupMenuNavigation();
@@ -111,6 +108,7 @@ function startGameSystems() {
   initRunStats();
 
   if (gameSystemsStarted) {
+    initEnvironment(scene);
     initPlayer(new THREE.Vector3(0, 1.7, 5));
     lastTime = performance.now();
     return;
@@ -124,6 +122,7 @@ function startGameSystems() {
   initPauseMenu();
   setupPauseNavigation();
   bindGameInputHandlers();
+  initEnvironment(scene);
   initPlayer(new THREE.Vector3(0, 1.7, 5));
   lastTime = performance.now();
 

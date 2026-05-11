@@ -1,7 +1,8 @@
 import * as THREE from 'three';
 
 const scene = new THREE.Scene();
-scene.background = new THREE.Color(0x000000);
+scene.background = new THREE.Color(0x050303);
+scene.fog = new THREE.FogExp2(0x050303, 0.035);
 
 const ambientLight = new THREE.AmbientLight(0x2a2a35, 0.18);
 scene.add(ambientLight);
