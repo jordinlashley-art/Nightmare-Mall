@@ -4,6 +4,7 @@ import { initLighting, toggleFlashlight, updateLighting } from './core/lighting.
 import { renderer } from './core/renderer.js';
 import { scene } from './core/scene.js';
 import { initEnvironment } from './world/environment.js';
+import { getCurrentNearbyItem, initItemSpawns, updateItems } from './world/items.js';
 import {
   initHUD,
   setActiveSlot,
@@ -78,6 +79,10 @@ function animate() {
   updatePlayer(delta);
   updateLighting(delta);
 
+  if (!GameState.isPaused) {
+    updateItems(delta);
+  }
+
   if (!GameState.isInspecting && !GameState.isPaused) {
     updateStealthIndicator();
     updateFearMeter(GameState.fear);
@@ -104,6 +109,10 @@ function bindGameInputHandlers() {
   );
   onSlotSelect(setActiveSlot);
   onInteract(() => {
+    if (getCurrentNearbyItem()) {
+      return;
+    }
+
     startPlantSequence();
   });
   onFlashlightToggle(() => toggleFlashlight());
@@ -118,6 +127,7 @@ function startGameSystems() {
   if (gameSystemsStarted) {
     initEnvironment(scene);
     initLighting();
+    initItemSpawns();
     initPlayer(new THREE.Vector3(0, 1.7, 5));
     lastTime = performance.now();
     return;
@@ -133,6 +143,7 @@ function startGameSystems() {
   bindGameInputHandlers();
   initEnvironment(scene);
   initLighting();
+  initItemSpawns();
   initPlayer(new THREE.Vector3(0, 1.7, 5));
   lastTime = performance.now();
 

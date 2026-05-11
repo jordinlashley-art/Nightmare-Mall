@@ -13,6 +13,8 @@ const GameState = {
   objective: null,
   isAlive: true,
   explosivesPlanted: false,
+  explosiveSpawnStoreId: null,
+  explosiveSpawnStoreHistory: [],
   isPaused: false,
   isInspecting: false,
   flashlightOn: false,
