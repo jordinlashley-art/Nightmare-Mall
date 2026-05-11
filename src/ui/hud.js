@@ -1,7 +1,12 @@
 import './ui.css';
-import { GameState, updateState } from '../systems/state.js';
+import { onSlotSelect } from '../systems/input.js';
+import { GameState, ITEM_TYPES, updateState } from '../systems/state.js';
 
+const QUICK_SLOT_COUNT = 4;
+const SLOT_NAME_MAX_LENGTH = 8;
 const STEALTH_STATE_CLASSES = ['hidden-state', 'safe', 'detected', 'compromised'];
+let quickSlotInputBound = false;
+let quickSlotStateListenerBound = false;
 
 function initFearMeter() {
   const hud = initHUDContainer();
@@ -52,6 +57,61 @@ function initStealthIndicator() {
   return stealthIndicator;
 }
 
+function handleQuickSlotStateUpdate(event) {
+  if (event.detail?.patch && 'inventory' in event.detail.patch) {
+    updateQuickSlots();
+  }
+}
+
+function initQuickSlots() {
+  const hud = initHUDContainer();
+  let quickSlots = document.getElementById('quick-slots');
+
+  if (!quickSlots) {
+    quickSlots = document.createElement('div');
+    quickSlots.id = 'quick-slots';
+    quickSlots.innerHTML = `
+      <div class="slot" data-slot="0">
+        <div class="slot-icon"></div>
+        <div class="slot-name"></div>
+        <div class="slot-key">1</div>
+      </div>
+      <div class="slot" data-slot="1">
+        <div class="slot-icon"></div>
+        <div class="slot-name"></div>
+        <div class="slot-key">2</div>
+      </div>
+      <div class="slot" data-slot="2">
+        <div class="slot-icon"></div>
+        <div class="slot-name"></div>
+        <div class="slot-key">3</div>
+      </div>
+      <div class="slot" data-slot="3">
+        <div class="slot-icon"></div>
+        <div class="slot-name"></div>
+        <div class="slot-key">4</div>
+      </div>
+    `;
+    quickSlots.querySelectorAll('.slot').forEach((slot) => {
+      slot.addEventListener('click', () => setActiveSlot(Number(slot.dataset.slot)));
+    });
+    hud.appendChild(quickSlots);
+  }
+
+  if (!quickSlotInputBound) {
+    onSlotSelect(setActiveSlot);
+    quickSlotInputBound = true;
+  }
+
+  if (typeof window !== 'undefined' && !quickSlotStateListenerBound) {
+    window.addEventListener('game-state-updated', handleQuickSlotStateUpdate);
+    quickSlotStateListenerBound = true;
+  }
+
+  updateQuickSlots();
+  return quickSlots;
+}
+
 function initHUDContainer() {
   let hud = document.getElementById('hud');
 
@@ -68,9 +128,55 @@ function initHUDContainer() {
 function initHUD() {
   const hud = initHUDContainer();
   initFearMeter();
+  initQuickSlots();
   initStealthIndicator();
 
   return hud;
+}
+
+// Updates the quick-slot inventory bar from the current game state.
+function updateQuickSlots() {
+  const quickSlots = document.getElementById('quick-slots');
+
+  if (!quickSlots) {
+    return;
+  }
+
+  for (let index = 0; index < QUICK_SLOT_COUNT; index++) {
+    const slot = quickSlots.querySelector(`[data-slot="${index}"]`);
+    const slotIcon = slot?.querySelector('.slot-icon');
+    const slotName = slot?.querySelector('.slot-name');
+    const itemName = GameState.inventory[index];
+    const itemType = ITEM_TYPES[itemName];
+
+    if (!slot || !slotIcon || !slotName) {
+      continue;
+    }
+
+    if (itemName) {
+      slot.classList.add('occupied');
+      slot.classList.remove('empty');
+      slotIcon.innerHTML = itemType?.icon ?? '?';
+      slotName.textContent = itemName.slice(0, SLOT_NAME_MAX_LENGTH);
+    } else {
+      slot.classList.add('empty');
+      slot.classList.remove('occupied');
+      slotIcon.innerHTML = '+';
+      slotName.textContent = '';
+    }
+
+    slot.classList.toggle('active', index === GameState.activeSlot);
+  }
+}
+
+// Selects the active quick-slot index and refreshes the slot bar.
+function setActiveSlot(index) {
+  const numericIndex = Number(index);
+  const safeIndex = Number.isFinite(numericIndex) ? Math.trunc(numericIndex) : 0;
+  const activeSlot = Math.min(QUICK_SLOT_COUNT - 1, Math.max(0, safeIndex));
+
+  updateState({ activeSlot });
+  updateQuickSlots();
 }
 
 // Updates the fear meter display and synchronizes the game state.
@@ -147,4 +253,4 @@ function updateStealthIndicator() {
   eyeClosed.hidden = !GameState.isHidden;
 }
 
-export { initHUD, updateFearMeter, updateStealthIndicator };
+export { initHUD, setActiveSlot, updateFearMeter, updateQuickSlots, updateStealthIndicator };
