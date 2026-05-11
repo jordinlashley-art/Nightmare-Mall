@@ -235,7 +235,7 @@ function updateStealthIndicator() {
     stealthLabelText = 'SEARCHING...';
   }
 
-  if (stealthState === 'compromised') {
+  if (stealthState === 'compromised' && !GameState.isInspecting) {
     updateState({ fear: Math.min(100, GameState.fear + 0.5) });
   }
 

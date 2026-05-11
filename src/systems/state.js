@@ -7,6 +7,7 @@ const GameState = {
   objective: null,
   isAlive: true,
   explosivesPlanted: false,
+  isInspecting: false,
 };
 
 const ITEM_TYPES = {
@@ -50,9 +51,15 @@ const ITEM_TYPES = {
 
 // Applies a partial state update and returns the current game state.
 function updateState(patch) {
+  const shouldNotifyStateListeners = ['inventory', 'activeSlot'].some((key) => key in patch);
+
   Object.assign(GameState, patch);
 
-  if ('inventory' in patch && typeof window !== 'undefined' && typeof CustomEvent === 'function') {
+  if (
+    shouldNotifyStateListeners
+    && typeof window !== 'undefined'
+    && typeof CustomEvent === 'function'
+  ) {
     window.dispatchEvent(new CustomEvent('game-state-updated', {
       detail: {
         patch,

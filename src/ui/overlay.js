@@ -1,6 +1,9 @@
-import { GameState, updateState } from '../systems/state.js';
+import { GameState, ITEM_TYPES, updateState } from '../systems/state.js';
 
 let pickupHideTimeout = null;
+let inspectTypewriterInterval = null;
+let inspectHideTimeout = null;
+let inspectInputBound = false;
 
 function getHUD() {
   let hud = document.getElementById('hud');
@@ -18,6 +21,7 @@ function getHUD() {
 function initOverlay() {
   initVignette();
   initPickupPrompt();
+  initInspectOverlay();
 }
 
 // Initializes the fear vignette overlay.
@@ -57,6 +61,192 @@ function initPickupPrompt() {
   }
 
   return pickupPrompt;
+}
+
+// Initializes the full-screen item inspection overlay.
+function initInspectOverlay() {
+  let inspectOverlay = document.getElementById('inspect-overlay');
+
+  if (!inspectOverlay) {
+    inspectOverlay = document.createElement('div');
+    inspectOverlay.id = 'inspect-overlay';
+    inspectOverlay.innerHTML = `
+      <div id="inspect-content">
+        <div id="inspect-icon"></div>
+        <div id="inspect-name"></div>
+        <div id="inspect-divider"></div>
+        <div id="inspect-description"></div>
+        <div id="inspect-meta">
+          <div class="meta-block">
+            <div class="meta-label">SLOT</div>
+            <div id="inspect-slot" class="meta-value"></div>
+          </div>
+          <div class="meta-block">
+            <div class="meta-label">STATUS</div>
+            <div class="meta-value">CARRIED</div>
+          </div>
+        </div>
+        <div id="inspect-hint">[ TAB ] to close</div>
+      </div>
+    `;
+    document.body.appendChild(inspectOverlay);
+  }
+
+  if (!inspectInputBound) {
+    window.addEventListener('keydown', handleInspectKeydown);
+    window.addEventListener('keyup', handleInspectKeyup);
+    window.addEventListener('game-state-updated', handleInspectStateUpdate);
+    inspectInputBound = true;
+  }
+
+  return inspectOverlay;
+}
+
+function cancelTypewriterEffect() {
+  if (inspectTypewriterInterval) {
+    window.clearInterval(inspectTypewriterInterval);
+    inspectTypewriterInterval = null;
+  }
+}
+
+function getActiveInspectItem() {
+  const itemName = GameState.inventory[GameState.activeSlot];
+
+  if (!itemName) {
+    return null;
+  }
+
+  return {
+    itemName,
+    item: ITEM_TYPES[itemName],
+  };
+}
+
+function handleInspectKeydown(event) {
+  if (event.key !== 'Tab') {
+    return;
+  }
+
+  event.preventDefault();
+
+  if (event.repeat) {
+    return;
+  }
+
+  openInspectOverlay();
+}
+
+function handleInspectKeyup(event) {
+  if (event.key !== 'Tab') {
+    return;
+  }
+
+  event.preventDefault();
+  closeInspectOverlay();
+}
+
+function handleInspectStateUpdate(event) {
+  const patch = event.detail?.patch;
+
+  if (
+    !GameState.isInspecting
+    || !patch
+    || (!('inventory' in patch) && !('activeSlot' in patch))
+  ) {
+    return;
+  }
+
+  if (!GameState.inventory[GameState.activeSlot]) {
+    closeInspectOverlay();
+  }
+}
+
+function formatInspectName(name) {
+  return name.split('').join(' ');
+}
+
+function typewriterEffect(text) {
+  const description = document.getElementById('inspect-description');
+  let characterIndex = 0;
+
+  if (!description) {
+    return;
+  }
+
+  cancelTypewriterEffect();
+  description.textContent = '';
+
+  inspectTypewriterInterval = window.setInterval(() => {
+    description.textContent += text.charAt(characterIndex);
+    characterIndex++;
+
+    if (characterIndex >= text.length) {
+      cancelTypewriterEffect();
+    }
+  }, 30);
+}
+
+// Opens the item inspection overlay for the current active inventory slot.
+function openInspectOverlay() {
+  const activeItem = getActiveInspectItem();
+
+  if (!activeItem || !activeItem.item) {
+    return;
+  }
+
+  const inspectOverlay = initInspectOverlay();
+  const inspectIcon = document.getElementById('inspect-icon');
+  const inspectName = document.getElementById('inspect-name');
+  const inspectSlot = document.getElementById('inspect-slot');
+
+  if (inspectHideTimeout) {
+    window.clearTimeout(inspectHideTimeout);
+    inspectHideTimeout = null;
+  }
+
+  if (inspectIcon) {
+    inspectIcon.innerHTML = activeItem.item.icon;
+  }
+
+  if (inspectName) {
+    inspectName.textContent = formatInspectName(activeItem.item.name);
+  }
+
+  if (inspectSlot) {
+    inspectSlot.textContent = String(GameState.activeSlot + 1);
+  }
+
+  typewriterEffect(activeItem.item.description);
+  inspectOverlay.style.transitionDuration = '0.4s';
+  inspectOverlay.style.visibility = 'visible';
+  inspectOverlay.style.opacity = '1';
+  updateState({ isInspecting: true });
+}
+
+// Closes the item inspection overlay and resumes normal game tension.
+function closeInspectOverlay() {
+  const inspectOverlay = document.getElementById('inspect-overlay');
+
+  cancelTypewriterEffect();
+  updateState({ isInspecting: false });
+
+  if (!inspectOverlay) {
+    return;
+  }
+
+  if (inspectHideTimeout) {
+    window.clearTimeout(inspectHideTimeout);
+  }
+
+  inspectOverlay.style.transitionDuration = '0.2s';
+  inspectOverlay.style.opacity = '0';
+  inspectHideTimeout = window.setTimeout(() => {
+    if (inspectOverlay.style.opacity === '0') {
+      inspectOverlay.style.visibility = 'hidden';
+    }
+
+    inspectHideTimeout = null;
+  }, 200);
 }
 
 // Updates vignette opacity based on the current fear value.
@@ -159,9 +349,12 @@ function triggerPickup(itemName) {
 
 export {
   hidePickupPrompt,
+  closeInspectOverlay,
+  initInspectOverlay,
   initOverlay,
   initPickupPrompt,
   initVignette,
+  openInspectOverlay,
   showPickupPrompt,
   triggerPickup,
   updateVignette,
