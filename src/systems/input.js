@@ -8,10 +8,15 @@ const trackedKeys = new Set([
   'arrowdown',
   'arrowright',
   'e',
+  '1',
+  '2',
+  '3',
+  '4',
 ]);
 
 const keyboardState = {};
 const interactCallbacks = new Set();
+const slotSelectCallbacks = new Set();
 const INTERACT_DEBOUNCE_MS = 500;
 let lastInteractAt = 0;
 
@@ -38,6 +43,10 @@ function handleKeydown(event) {
   const now = Date.now();
 
   setKeyState(event, true);
+
+  if (slotSelectCallbacks.size > 0 && key >= '1' && key <= '4') {
+    slotSelectCallbacks.forEach((callback) => callback(Number(key) - 1));
+  }
 
   if (
     key !== 'e'
@@ -69,4 +78,13 @@ function onInteract(callback) {
   };
 }
 
-export { keyboardState, isKeyPressed, onInteract };
+// Registers a callback for quick-slot number key presses.
+function onSlotSelect(callback) {
+  slotSelectCallbacks.add(callback);
+
+  return () => {
+    slotSelectCallbacks.delete(callback);
+  };
+}
+
+export { keyboardState, isKeyPressed, onInteract, onSlotSelect };

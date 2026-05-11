@@ -34,6 +34,90 @@ canvas {
   z-index: 10;
 }
 
+#quick-slots {
+  position: fixed;
+  bottom: 100px;
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  gap: 8px;
+  z-index: 100;
+  pointer-events: all;
+}
+
+.slot {
+  width: 72px;
+  height: 80px;
+  border: 1.5px solid rgba(255, 255, 255, 0.15);
+  border-radius: 8px;
+  background: var(--color-bg-hud);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  position: relative;
+}
+
+.slot:hover {
+  border-color: rgba(255, 255, 255, 0.4);
+  background: rgba(0, 0, 0, 0.75);
+}
+
+.slot.active {
+  border-color: var(--color-safe);
+  box-shadow: 0 0 14px rgba(0, 255, 153, 0.25);
+  transform: scale(1.08);
+}
+
+.slot.occupied {
+  border-color: rgba(255, 255, 255, 0.24);
+}
+
+.slot-icon {
+  font-size: 22px;
+  line-height: 1;
+  transition: transform 0.15s ease;
+}
+
+.slot.active .slot-icon {
+  transform: scale(1.1);
+}
+
+.slot-name {
+  max-width: 56px;
+  overflow: hidden;
+  font-family: var(--font-primary);
+  font-size: 8px;
+  letter-spacing: 1px;
+  color: var(--color-text);
+  opacity: 0.7;
+  text-align: center;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+.slot-key {
+  position: absolute;
+  bottom: 4px;
+  right: 6px;
+  font-family: var(--font-primary);
+  font-size: 8px;
+  color: var(--color-text);
+  opacity: 0.3;
+}
+
+.slot.empty {
+  border-color: rgba(255, 255, 255, 0.08);
+}
+
+.slot.empty .slot-icon {
+  color: rgba(255, 255, 255, 0.15);
+  font-size: 16px;
+}
+
 #fear-meter {
   position: fixed;
   bottom: 32px;
