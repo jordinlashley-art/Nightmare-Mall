@@ -311,6 +311,13 @@ canvas {
   max-width: 480px;
 }
 
+#menu-howto .subscreen-content,
+#pause-howto .subscreen-content {
+  max-height: 68vh;
+  overflow-y: auto;
+  padding-right: 8px;
+}
+
 .howto-row {
   display: flex;
   align-items: center;
@@ -345,6 +352,23 @@ canvas {
   letter-spacing: 2px;
   text-align: center;
   opacity: 0.4;
+}
+
+.howto-items {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-top: 8px;
+}
+
+.howto-item-row {
+  display: flex;
+  gap: 12px;
+  align-items: flex-start;
+  font-size: 11px;
+  letter-spacing: 1px;
+  opacity: 0.55;
+  line-height: 1.5;
 }
 
 .credits-row {
@@ -1069,6 +1093,67 @@ canvas {
   pointer-events: all;
 }
 
+#use-hints {
+  position: fixed;
+  bottom: 180px;
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  gap: 24px;
+  z-index: 100;
+  pointer-events: none;
+  font-family: var(--font-primary);
+}
+
+#use-hints > div {
+  display: flex;
+  align-items: center;
+  transition:
+    color 0.2s ease,
+    opacity 0.2s ease;
+}
+
+.hint-key {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 4px;
+  font-size: 11px;
+  color: var(--color-text);
+  margin-right: 6px;
+}
+
+.hint-label {
+  font-size: 9px;
+  letter-spacing: 2px;
+  color: var(--color-text);
+  opacity: 0.35;
+  text-transform: uppercase;
+}
+
+#use-hints .dimmed {
+  opacity: 0.15;
+}
+
+#use-hints .active-hint .hint-key {
+  border-color: var(--color-warning);
+  color: var(--color-warning);
+}
+
+#use-hints .active-hint .hint-label {
+  color: var(--color-warning);
+  opacity: 0.8;
+}
+
+#hint-q.active-hint .hint-key,
+#hint-q.active-hint .hint-label {
+  border-color: #ff6600;
+  color: #ff6600;
+}
+
 .slot {
   width: 72px;
   height: 80px;
@@ -1386,6 +1471,42 @@ canvas {
   );
   opacity: 0;
   transition: opacity 0.8s ease;
+}
+
+#medkit-vignette {
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 150;
+  background: rgba(0, 255, 153, 0.15);
+  opacity: 0;
+}
+
+#medkit-vignette.active {
+  animation: medkit-vignette-flash 0.8s ease-out forwards;
+}
+
+#hud-notification {
+  position: fixed;
+  top: 30%;
+  left: 50%;
+  z-index: 150;
+  font-family: var(--font-primary);
+  font-size: 14px;
+  letter-spacing: 5px;
+  text-align: center;
+  text-transform: uppercase;
+  pointer-events: none;
+  opacity: 0;
+  transform: translate(-50%, -10px);
+  transition:
+    opacity 0.2s ease,
+    transform 0.2s ease;
+}
+
+#hud-notification.visible {
+  opacity: 0.9;
+  transform: translate(-50%, 0);
 }
 
 #inspect-overlay {
@@ -2072,6 +2193,20 @@ body.plant-screen-shake {
 
   100% {
     background: rgba(0, 255, 153, 0);
+  }
+}
+
+@keyframes medkit-vignette-flash {
+  0% {
+    opacity: 0;
+  }
+
+  25% {
+    opacity: 0.8;
+  }
+
+  100% {
+    opacity: 0;
   }
 }
 

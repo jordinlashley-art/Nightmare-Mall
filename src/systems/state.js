@@ -19,6 +19,9 @@ const GameState = {
   isInspecting: false,
   flashlightOn: false,
   flashlightVisible: false,
+  lighterOn: false,
+  ropeUsed: false,
+  radioThrown: false,
   difficulty: 'normal',
   loreNotesFound: [],
 };

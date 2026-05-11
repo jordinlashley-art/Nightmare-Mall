@@ -27,6 +27,9 @@ let lastObjectiveState = null;
 let objectiveSwapTimeoutId = null;
 let objectiveSubTimeoutId = null;
 let objectiveRenderToken = 0;
+const useHintContext = {
+  nearRopeClimbPoint: false,
+};
 
 function initFearMeter() {
   const hud = initHUDContainer();
@@ -127,6 +130,34 @@ function initQuickSlots() {
   return quickSlots;
 }
 
+function initUseHints() {
+  const hud = initHUDContainer();
+  let useHints = document.getElementById('use-hints');
+
+  if (!useHints) {
+    useHints = document.createElement('div');
+    useHints.id = 'use-hints';
+    useHints.innerHTML = `
+      <div id="hint-f">
+        <span class="hint-key">F</span>
+        <span class="hint-label">FLASHLIGHT</span>
+      </div>
+      <div id="hint-q">
+        <span class="hint-key">Q</span>
+        <span class="hint-label">USE</span>
+      </div>
+      <div id="hint-r">
+        <span class="hint-key">R</span>
+        <span class="hint-label">THROW</span>
+      </div>
+    `;
+    hud.appendChild(useHints);
+  }
+
+  updateUseHints();
+  return useHints;
+}
+
 // Initializes the top-left objective tracker.
 function initObjectiveTracker() {
   const hud = initHUDContainer();
@@ -167,10 +198,65 @@ function initHUD() {
   const hud = initHUDContainer();
   initFearMeter();
   initQuickSlots();
+  initUseHints();
   initStealthIndicator();
   initObjectiveTracker();
 
   return hud;
+}
+
+function setHintDimmed(hint, isDimmed) {
+  hint?.classList.toggle('dimmed', isDimmed);
+}
+
+function setHintActive(hint, isActive) {
+  hint?.classList.toggle('active-hint', isActive);
+}
+
+// Updates item action hint labels, availability, and active light states.
+function updateUseHints() {
+  const hintF = document.getElementById('hint-f');
+  const hintQ = document.getElementById('hint-q');
+  const hintR = document.getElementById('hint-r');
+  const qLabel = hintQ?.querySelector('.hint-label');
+  const rLabel = hintR?.querySelector('.hint-label');
+  const activeItem = GameState.inventory[GameState.activeSlot];
+  let qText = 'USE';
+
+  if (!hintF || !hintQ || !hintR || !qLabel || !rLabel) {
+    return;
+  }
+
+  switch (activeItem) {
+    case ITEM_TYPES.LIGHTER.name:
+      qText = 'TOGGLE LIGHTER';
+      break;
+    case ITEM_TYPES.MEDKIT.name:
+      qText = 'USE MEDKIT';
+      break;
+    case ITEM_TYPES.ROPE.name:
+      qText = useHintContext.nearRopeClimbPoint ? 'CLIMB' : 'USE ROPE';
+      break;
+    default:
+      qText = 'USE';
+      break;
+  }
+
+  qLabel.textContent = qText;
+  rLabel.textContent = activeItem === ITEM_TYPES.RADIO.name ? 'THROW RADIO' : 'THROW';
+
+  setHintDimmed(hintF, !GameState.inventory.includes(ITEM_TYPES.FLASHLIGHT.name));
+  setHintDimmed(hintQ, !activeItem || activeItem === ITEM_TYPES.RADIO.name || activeItem === ITEM_TYPES.FLASHLIGHT.name);
+  setHintDimmed(hintR, activeItem !== ITEM_TYPES.RADIO.name);
+
+  setHintActive(hintF, GameState.flashlightOn);
+  setHintActive(hintQ, GameState.lighterOn && activeItem === ITEM_TYPES.LIGHTER.name);
+  setHintActive(hintR, false);
+}
+
+// Updates HUD-only context that item systems calculate outside the UI layer.
+function setUseHintContext(context) {
+  Object.assign(useHintContext, context);
 }
 
 // Updates the quick-slot inventory bar from the current game state.
@@ -447,4 +533,6 @@ export {
   updateObjectiveTracker,
   updateQuickSlots,
   updateStealthIndicator,
+  updateUseHints,
+  setUseHintContext,
 };
