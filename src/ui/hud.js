@@ -1,5 +1,4 @@
 import './ui.css';
-import { onSlotSelect } from '../systems/input.js';
 import { GameState, ITEM_TYPES, updateState } from '../systems/state.js';
 
 const QUICK_SLOT_COUNT = 4;
@@ -23,7 +22,6 @@ const OBJECTIVE_STATES = {
     subText: 'Do not look back.',
   },
 };
-let quickSlotInputBound = false;
 let quickSlotStateListenerBound = false;
 let lastObjectiveState = null;
 let objectiveSwapTimeoutId = null;
@@ -118,11 +116,6 @@ function initQuickSlots() {
       slot.addEventListener('click', () => setActiveSlot(Number(slot.dataset.slot)));
     });
     hud.appendChild(quickSlots);
-  }
-
-  if (!quickSlotInputBound) {
-    onSlotSelect(setActiveSlot);
-    quickSlotInputBound = true;
   }
 
   if (typeof window !== 'undefined' && !quickSlotStateListenerBound) {
