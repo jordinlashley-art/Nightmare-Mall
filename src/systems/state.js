@@ -2,6 +2,12 @@ const GameState = {
   fear: 0,
   isHidden: false,
   detectionLevel: 0,
+  demonProximity: {
+    north: 0,
+    south: 0,
+    east: 0,
+    west: 0,
+  },
   inventory: [],
   activeSlot: 0,
   objective: null,
