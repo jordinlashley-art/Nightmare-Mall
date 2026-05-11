@@ -1,0 +1,35 @@
+@import url('https://fonts.googleapis.com/css2?family=VT323&display=swap');
+
+:root {
+  --color-fear: #ff2200;
+  --color-safe: #00ff99;
+  --color-warning: #ffaa00;
+  --color-danger: #ff2200;
+  --color-bg-hud: rgba(0, 0, 0, 0.6);
+  --font-primary: 'Courier New', monospace;
+  --color-text: #e8e8e8;
+}
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+body {
+  overflow: hidden;
+  background: #000;
+  color: var(--color-text);
+  font-family: var(--font-primary);
+}
+
+canvas {
+  display: block;
+}
+
+#hud {
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 10;
+}

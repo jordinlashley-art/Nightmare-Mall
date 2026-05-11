@@ -1,0 +1,3 @@
+function initOverlay() {}
+
+export { initOverlay };
