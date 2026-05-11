@@ -2,7 +2,13 @@ import { camera } from './core/camera.js';
 import { renderer } from './core/renderer.js';
 import { scene } from './core/scene.js';
 import { initEnvironment } from './world/environment.js';
-import { initHUD, updateFearMeter, updateQuickSlots, updateStealthIndicator } from './ui/hud.js';
+import {
+  initHUD,
+  updateFearMeter,
+  updateObjectiveTracker,
+  updateQuickSlots,
+  updateStealthIndicator,
+} from './ui/hud.js';
 import { initMenu } from './ui/menu.js';
 import {
   closeInspectOverlay,
@@ -10,7 +16,7 @@ import {
   openInspectOverlay,
   updateVignette,
 } from './ui/overlay.js';
-import { initPlantUI, startPlantSequence } from './ui/plantUI.js';
+import { initPlantUI } from './ui/plantUI.js';
 import { GameState, updateState } from './systems/state.js';
 import { onInspectHold } from './systems/input.js';
 
@@ -27,24 +33,34 @@ onInspectHold(
   () => closeInspectOverlay(),
 );
 
-// TEMP TEST — remove before PROMPT 08
-// Pre-load inventory with explosive for sequence testing.
+// TEMP TEST — remove before PROMPT 09
+// Test all 3 objective states sequentially
+
+// STATE 1: No explosive in inventory
 updateState({
-  inventory: ['FLASHLIGHT', 'EXPLOSIVE'],
-  activeSlot: 1,
+  inventory: ['FLASHLIGHT', 'RADIO'],
+  explosivesPlanted: false,
 });
 updateQuickSlots();
+updateObjectiveTracker();
 
-// Press P to trigger plant sequence manually.
-// This simulates being at the portal.
-window.addEventListener('keydown', (event) => {
-  if (event.key === 'p' || event.key === 'P') {
-    startPlantSequence();
-  }
-});
-// Test full sequence: P → E to confirm → watch all phases
-// Test cancel: P → ESC → verify HUD returns
-// Test fear elevation persists after cancel
+// After 4s: simulate picking up explosive → STATE 2
+setTimeout(() => {
+  updateState({
+    inventory: ['FLASHLIGHT', 'RADIO', 'EXPLOSIVE'],
+  });
+  updateQuickSlots();
+}, 4000);
+
+// After 8s: simulate planting → STATE 3
+setTimeout(() => {
+  updateState({ explosivesPlanted: true });
+}, 8000);
+
+// Observe:
+// 0-4s:  "Find the explosive" (white chevron)
+// 4-8s:  "Plant the explosive" (amber chevron)
+// 8s+:   "GET OUT NOW" (red, glitching)
 
 function animate() {
   if (!GameState.isInspecting) {
@@ -53,6 +69,7 @@ function animate() {
   }
 
   updateVignette(GameState.fear);
+  updateObjectiveTracker();
   renderer.render(scene, camera);
 }
 

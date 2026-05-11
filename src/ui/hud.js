@@ -5,8 +5,30 @@ import { GameState, ITEM_TYPES, updateState } from '../systems/state.js';
 const QUICK_SLOT_COUNT = 4;
 const SLOT_NAME_MAX_LENGTH = 8;
 const STEALTH_STATE_CLASSES = ['hidden-state', 'safe', 'detected', 'compromised'];
+const OBJECTIVE_STATE_CLASSES = ['state-search', 'state-armed', 'state-planted'];
+const OBJECTIVE_STATES = {
+  search: {
+    className: 'state-search',
+    text: 'Find the explosive',
+    subText: "Search the mall. It's here somewhere.",
+  },
+  armed: {
+    className: 'state-armed',
+    text: 'Plant the explosive',
+    subText: 'Find the hell portal. End this.',
+  },
+  planted: {
+    className: 'state-planted',
+    text: 'GET OUT NOW',
+    subText: 'Do not look back.',
+  },
+};
 let quickSlotInputBound = false;
 let quickSlotStateListenerBound = false;
+let lastObjectiveState = null;
+let objectiveSwapTimeoutId = null;
+let objectiveSubTimeoutId = null;
+let objectiveRenderToken = 0;
 
 function initFearMeter() {
   const hud = initHUDContainer();
@@ -112,6 +134,29 @@ function initQuickSlots() {
   return quickSlots;
 }
 
+// Initializes the top-left objective tracker.
+function initObjectiveTracker() {
+  const hud = initHUDContainer();
+  let objectiveTracker = document.getElementById('objective-tracker');
+
+  if (!objectiveTracker) {
+    objectiveTracker = document.createElement('div');
+    objectiveTracker.id = 'objective-tracker';
+    objectiveTracker.innerHTML = `
+      <div id="objective-header">OBJECTIVE</div>
+      <div id="objective-main">
+        <span id="objective-chevron">►</span>
+        <span id="objective-text"></span>
+      </div>
+      <div id="objective-sub"></div>
+    `;
+    hud.appendChild(objectiveTracker);
+  }
+
+  updateObjectiveTracker();
+  return objectiveTracker;
+}
+
 function initHUDContainer() {
   let hud = document.getElementById('hud');
 
@@ -130,6 +175,7 @@ function initHUD() {
   initFearMeter();
   initQuickSlots();
   initStealthIndicator();
+  initObjectiveTracker();
 
   return hud;
 }
@@ -253,4 +299,163 @@ function updateStealthIndicator() {
   eyeClosed.hidden = !GameState.isHidden;
 }
 
-export { initHUD, setActiveSlot, updateFearMeter, updateQuickSlots, updateStealthIndicator };
+function getCurrentObjectiveState() {
+  const explosiveName = ITEM_TYPES.EXPLOSIVE.name;
+
+  if (!GameState.isAlive || GameState.playerReachedExit) {
+    return 'complete';
+  }
+
+  if (GameState.explosivesPlanted) {
+    return 'planted';
+  }
+
+  if (GameState.inventory.includes(explosiveName)) {
+    return 'armed';
+  }
+
+  return 'search';
+}
+
+function clearObjectiveTimers() {
+  objectiveRenderToken++;
+
+  if (objectiveSwapTimeoutId) {
+    window.clearTimeout(objectiveSwapTimeoutId);
+    objectiveSwapTimeoutId = null;
+  }
+
+  if (objectiveSubTimeoutId) {
+    window.clearTimeout(objectiveSubTimeoutId);
+    objectiveSubTimeoutId = null;
+  }
+}
+
+function renderObjectiveState(stateKey) {
+  const objectiveTracker = document.getElementById('objective-tracker');
+  const objectiveText = document.getElementById('objective-text');
+  const objectiveSub = document.getElementById('objective-sub');
+  const objectiveState = OBJECTIVE_STATES[stateKey];
+
+  if (!objectiveTracker || !objectiveText || !objectiveSub || !objectiveState) {
+    return;
+  }
+
+  objectiveTracker.classList.remove(...OBJECTIVE_STATE_CLASSES);
+  objectiveTracker.classList.add(objectiveState.className);
+  objectiveText.textContent = objectiveState.text;
+  objectiveSub.textContent = objectiveState.subText;
+  objectiveSub.classList.remove('visible');
+}
+
+function scheduleObjectiveSubFade(stateKey, renderToken) {
+  const objectiveSub = document.getElementById('objective-sub');
+
+  if (!objectiveSub || stateKey === 'planted') {
+    return;
+  }
+
+  objectiveSubTimeoutId = window.setTimeout(() => {
+    if (renderToken !== objectiveRenderToken || GameState.isInspecting) {
+      return;
+    }
+
+    objectiveSub.classList.add('visible');
+    objectiveSubTimeoutId = null;
+  }, 500);
+}
+
+function hideObjectiveTracker() {
+  const objectiveTracker = document.getElementById('objective-tracker');
+
+  if (!objectiveTracker) {
+    return;
+  }
+
+  clearObjectiveTimers();
+  objectiveTracker.style.transitionDuration = '0.2s';
+  objectiveTracker.style.opacity = '0';
+  objectiveTracker.style.visibility = 'hidden';
+}
+
+// Updates the objective tracker from the current game state.
+function updateObjectiveTracker() {
+  const objectiveTracker = document.getElementById('objective-tracker');
+
+  if (!objectiveTracker) {
+    return;
+  }
+
+  if (GameState.isInspecting) {
+    hideObjectiveTracker();
+    return;
+  }
+
+  objectiveTracker.style.visibility = 'visible';
+
+  const currentObjectiveState = getCurrentObjectiveState();
+
+  if (currentObjectiveState === 'complete') {
+    hideObjectiveTracker();
+    lastObjectiveState = currentObjectiveState;
+    return;
+  }
+
+  if (currentObjectiveState === lastObjectiveState) {
+    const objectiveSub = document.getElementById('objective-sub');
+
+    if (objectiveSwapTimeoutId) {
+      return;
+    }
+
+    if (
+      currentObjectiveState !== 'planted'
+      && objectiveSub
+      && !objectiveSub.classList.contains('visible')
+      && !objectiveSubTimeoutId
+    ) {
+      scheduleObjectiveSubFade(currentObjectiveState, objectiveRenderToken);
+    }
+
+    objectiveTracker.style.transitionDuration = '0.3s';
+    objectiveTracker.style.opacity = '1';
+    return;
+  }
+
+  clearObjectiveTimers();
+
+  const shouldFadeSwap = lastObjectiveState !== null;
+  const renderToken = objectiveRenderToken;
+  lastObjectiveState = currentObjectiveState;
+
+  if (!shouldFadeSwap) {
+    renderObjectiveState(currentObjectiveState);
+    objectiveTracker.style.transitionDuration = '0.3s';
+    objectiveTracker.style.opacity = '1';
+    scheduleObjectiveSubFade(currentObjectiveState, renderToken);
+    return;
+  }
+
+  objectiveTracker.style.transitionDuration = '0.2s';
+  objectiveTracker.style.opacity = '0';
+  objectiveSwapTimeoutId = window.setTimeout(() => {
+    if (renderToken !== objectiveRenderToken || GameState.isInspecting) {
+      return;
+    }
+
+    renderObjectiveState(currentObjectiveState);
+    objectiveTracker.style.transitionDuration = '0.3s';
+    objectiveTracker.style.opacity = '1';
+    objectiveSwapTimeoutId = null;
+    scheduleObjectiveSubFade(currentObjectiveState, renderToken);
+  }, 200);
+}
+
+export {
+  initHUD,
+  setActiveSlot,
+  updateFearMeter,
+  updateObjectiveTracker,
+  updateQuickSlots,
+  updateStealthIndicator,
+};
