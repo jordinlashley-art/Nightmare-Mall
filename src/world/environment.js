@@ -447,6 +447,89 @@ function buildStore(targetScene, store) {
   }, targetScene);
 }
 
+function buildFlashlightDiscoveryScene(targetScene) {
+  const discoveryYaw = -0.35;
+  const targetGroup = environmentGroup ?? targetScene;
+  const caseBase = createBox({
+    w: 1.1,
+    h: 0.12,
+    d: 0.7,
+    x: -19.2,
+    y: 0.06,
+    z: -30.95,
+    color: 0x141414,
+    receiveShadow: true,
+    castShadow: true,
+    addToCollision: false,
+  }, targetScene);
+  const caseLid = createBox({
+    w: 1.05,
+    h: 0.08,
+    d: 0.6,
+    x: -19.55,
+    y: 0.18,
+    z: -30.65,
+    color: 0x0f0f0f,
+    receiveShadow: true,
+    castShadow: true,
+    addToCollision: false,
+  }, targetScene);
+  const cameraBody = createBox({
+    w: 0.48,
+    h: 0.28,
+    d: 0.28,
+    x: -18.25,
+    y: 0.18,
+    z: -30.72,
+    color: 0x080808,
+    receiveShadow: true,
+    castShadow: true,
+    addToCollision: false,
+  }, targetScene);
+  const cameraLens = new THREE.Mesh(
+    new THREE.CylinderGeometry(0.12, 0.12, 0.18, 16),
+    new THREE.MeshLambertMaterial({ color: 0x050505 }),
+  );
+  const photoOne = createBox({
+    w: 0.45,
+    h: 0.02,
+    d: 0.32,
+    x: -18.7,
+    y: 0.02,
+    z: -30.25,
+    color: 0xd8d2c0,
+    receiveShadow: true,
+    castShadow: false,
+    addToCollision: false,
+  }, targetScene);
+  const photoTwo = createBox({
+    w: 0.38,
+    h: 0.02,
+    d: 0.28,
+    x: -17.9,
+    y: 0.02,
+    z: -31.05,
+    color: 0xb9b2a0,
+    receiveShadow: true,
+    castShadow: false,
+    addToCollision: false,
+  }, targetScene);
+
+  // Staged beside the flashlight so the pickup reads as someone else's last kit.
+  caseBase.rotation.y = discoveryYaw;
+  caseLid.rotation.y = discoveryYaw + 0.45;
+  cameraBody.rotation.y = discoveryYaw + 0.2;
+  photoOne.rotation.y = 0.65;
+  photoTwo.rotation.y = -0.4;
+
+  cameraLens.position.set(-18.05, 0.18, -30.6);
+  cameraLens.rotation.x = Math.PI / 2;
+  cameraLens.rotation.z = discoveryYaw;
+  cameraLens.castShadow = true;
+  cameraLens.receiveShadow = true;
+  targetGroup.add(cameraLens);
+}
+
 function buildKioskStore(targetScene, store) {
   const { x, z } = store.position;
   const accentOffset = store.id === 'S11' || store.id === 'S14' ? -0.4 : 0.4;
@@ -652,6 +735,7 @@ function initEnvironment(targetScene = defaultScene) {
   STORE_DEFINITIONS.forEach((store) => {
     buildStore(targetScene, store);
   });
+  buildFlashlightDiscoveryScene(targetScene);
   buildConnectingCorridors(targetScene);
   buildBoundaryGuards(targetScene);
 

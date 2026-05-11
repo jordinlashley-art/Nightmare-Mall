@@ -24,7 +24,7 @@ const ITEM_GLOW_COLORS = {
 };
 
 const STATIC_SPAWN_POSITIONS = {
-  FLASHLIGHT: new THREE.Vector3(-40, 0.5, -24),
+  FLASHLIGHT: new THREE.Vector3(-18.8, 0.5, -30.8),
   LIGHTER: new THREE.Vector3(12, 0.5, -25),
   RADIO: new THREE.Vector3(-18, 0.5, -33),
   ROPE: new THREE.Vector3(18, 0.5, 33),

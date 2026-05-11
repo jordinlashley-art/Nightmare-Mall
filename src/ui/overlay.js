@@ -1,6 +1,7 @@
 import { GameState, ITEM_TYPES, updateState } from '../systems/state.js';
 import { collectItem } from '../world/items.js';
 import { playItemPickupSound } from '../systems/audio.js';
+import { showNotification } from './notification.js';
 
 let pickupHideTimeout = null;
 let inspectTypewriterInterval = null;
@@ -327,6 +328,10 @@ function triggerPickup(itemName) {
   updateState({ inventory: GameState.inventory });
   collectItem(itemName);
   playItemPickupSound();
+
+  if (itemName === ITEM_TYPES.FLASHLIGHT.name) {
+    showNotification('FLASHLIGHT FOUND', 2200, 'var(--color-warning)');
+  }
 
   pickupPrompt.classList.remove('pickup-flash');
   void pickupPrompt.offsetWidth;

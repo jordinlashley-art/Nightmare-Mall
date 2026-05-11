@@ -30,7 +30,7 @@ const ITEM_TYPES = {
   FLASHLIGHT: {
     name: 'FLASHLIGHT',
     icon: '🔦',
-    description: 'Cuts through the dark. But the beam is visible. They can see it too. Use sparingly.',
+    description: 'Found beside a cracked camera case. Cuts through the dark, but the beam is visible. They can see it too. Use sparingly.',
     stackable: false,
   },
   LIGHTER: {
