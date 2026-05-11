@@ -10,6 +10,7 @@ import {
   openInspectOverlay,
   updateVignette,
 } from './ui/overlay.js';
+import { initPlantUI, startPlantSequence } from './ui/plantUI.js';
 import { GameState, updateState } from './systems/state.js';
 import { onInspectHold } from './systems/input.js';
 
@@ -19,23 +20,31 @@ initEnvironment(scene);
 initHUD();
 initMenu();
 initOverlay();
+initPlantUI();
 
 onInspectHold(
   () => openInspectOverlay(),
   () => closeInspectOverlay(),
 );
 
-// TEMP TEST - remove before PROMPT 07
-// Pre-populate inventory for inspect testing.
+// TEMP TEST — remove before PROMPT 08
+// Pre-load inventory with explosive for sequence testing.
 updateState({
-  inventory: ['FLASHLIGHT', 'RADIO', 'EXPLOSIVE'],
-  activeSlot: 0,
+  inventory: ['FLASHLIGHT', 'EXPLOSIVE'],
+  activeSlot: 1,
 });
 updateQuickSlots();
-// Hold TAB to inspect FLASHLIGHT (slot 1)
-// Press 2, hold TAB to inspect RADIO
-// Press 3, hold TAB to inspect EXPLOSIVE
-// Press 4 (empty slot), hold TAB - overlay should NOT open
+
+// Press P to trigger plant sequence manually.
+// This simulates being at the portal.
+window.addEventListener('keydown', (event) => {
+  if (event.key === 'p' || event.key === 'P') {
+    startPlantSequence();
+  }
+});
+// Test full sequence: P → E to confirm → watch all phases
+// Test cancel: P → ESC → verify HUD returns
+// Test fear elevation persists after cancel
 
 function animate() {
   if (!GameState.isInspecting) {
