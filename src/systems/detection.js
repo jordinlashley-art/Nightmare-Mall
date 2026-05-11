@@ -1,6 +1,7 @@
 import * as THREE from 'three';
 import { GameState, updateState } from './state.js';
 import { getPlayerDirection, getPlayerPosition, getPlayerState } from './player.js';
+import { getCurrentDifficulty } from './difficulty.js';
 import {
   alertDemon,
   getDemonPosition,
@@ -137,6 +138,7 @@ function updateCompassDirection(playerPos, demonPos, distanceToDemon) {
 }
 
 function applyProximityFear(distanceToDemon) {
+  const difficulty = getCurrentDifficulty();
   let fearBleed = DETECTION_CONFIG.fearBleedDistant;
 
   if (distanceToDemon > DETECTION_CONFIG.proximityDistant) {
@@ -151,22 +153,24 @@ function applyProximityFear(distanceToDemon) {
 
   if (fearBleed > 0) {
     updateState({
-      fear: Math.min(100, GameState.fear + fearBleed),
+      fear: Math.min(100, GameState.fear + fearBleed * difficulty.fearMultiplier),
     });
   }
 }
 
 function getSoundRadius(playerSt) {
+  const difficulty = getCurrentDifficulty();
+
   if (playerSt.isSprinting && playerSt.isMoving) {
-    return DETECTION_CONFIG.soundRadiusSprint;
+    return DETECTION_CONFIG.soundRadiusSprint * difficulty.detectionMultiplier;
   }
 
   if (playerSt.isCrouching) {
-    return DETECTION_CONFIG.soundRadiusCrouch;
+    return DETECTION_CONFIG.soundRadiusCrouch * difficulty.detectionMultiplier;
   }
 
   if (playerSt.isMoving) {
-    return DETECTION_CONFIG.soundRadiusWalk;
+    return DETECTION_CONFIG.soundRadiusWalk * difficulty.detectionMultiplier;
   }
 
   return 0;
@@ -216,10 +220,11 @@ function isFlashlightPointingAtDemon(playerPos, demonPos) {
 
 function applySoundSense(playerPos, demonSt, distanceToDemon, soundRadius) {
   detectionState.soundRadius = soundRadius;
+  const difficulty = getCurrentDifficulty();
 
   if (
     GameState.flashlightOn
-    && distanceToDemon < DETECTION_CONFIG.soundRadiusFlash
+    && distanceToDemon < DETECTION_CONFIG.soundRadiusFlash * difficulty.detectionMultiplier
     && demonSt.behaviorState === 'PATROL'
   ) {
     alertDemon(playerPos.clone());
@@ -237,6 +242,7 @@ function applySoundSense(playerPos, demonSt, distanceToDemon, soundRadius) {
 }
 
 function getVisionParams(demonSt, playerPos, demonPos) {
+  const difficulty = getCurrentDifficulty();
   let angle = DETECTION_CONFIG.visionAnglePatrol;
   let range = DETECTION_CONFIG.visionRangePatrol;
 
@@ -254,7 +260,7 @@ function getVisionParams(demonSt, playerPos, demonPos) {
 
   return {
     angle,
-    range,
+    range: range * difficulty.detectionMultiplier,
   };
 }
 
@@ -310,7 +316,8 @@ function applySightResults(inSight, delta, demonSt, playerPos) {
 
     detectionState.currentDetectionLevel = Math.min(
       100,
-      detectionState.currentDetectionLevel + DETECTION_CONFIG.detectionRiseRate * delta * 10,
+      detectionState.currentDetectionLevel
+        + DETECTION_CONFIG.detectionRiseRate * getCurrentDifficulty().detectionMultiplier * delta * 10,
     );
     return;
   }

@@ -376,6 +376,55 @@ canvas {
   animation: pulse-calm 2s ease-in-out infinite;
 }
 
+.leaderboard-content {
+  max-width: 640px;
+}
+
+#leaderboard-source {
+  color: var(--color-warning);
+  font-size: 10px;
+  letter-spacing: 4px;
+  text-align: center;
+  opacity: 0.45;
+}
+
+#leaderboard-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.leaderboard-row {
+  display: grid;
+  grid-template-columns: 40px 1fr 80px 140px;
+  gap: 12px;
+  padding: 8px 0;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+  font-size: 12px;
+  letter-spacing: 2px;
+}
+
+.leaderboard-rank,
+.leaderboard-score {
+  color: var(--color-safe);
+}
+
+.leaderboard-name {
+  color: var(--color-text);
+}
+
+.leaderboard-meta,
+.leaderboard-empty {
+  opacity: 0.45;
+}
+
+.leaderboard-empty {
+  padding: 16px 0;
+  font-size: 12px;
+  letter-spacing: 4px;
+  text-align: center;
+}
+
 #pause-menu {
   position: fixed;
   inset: 0;
@@ -1355,6 +1404,77 @@ canvas {
   visibility: hidden;
   pointer-events: none;
   transition: opacity 0.4s ease;
+}
+
+#lore-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 210;
+  display: none;
+  align-items: center;
+  justify-content: center;
+  padding: 32px;
+  background:
+    radial-gradient(circle at center, rgba(255, 170, 0, 0.08), transparent 34%),
+    rgba(0, 0, 0, 0.86);
+  backdrop-filter: blur(4px);
+  pointer-events: all;
+}
+
+#lore-overlay.active {
+  display: flex;
+}
+
+#lore-panel {
+  width: min(90vw, 520px);
+  padding: 42px 36px;
+  border: 1px solid rgba(255, 224, 140, 0.22);
+  background:
+    linear-gradient(rgba(36, 27, 18, 0.94), rgba(8, 8, 8, 0.96)),
+    repeating-linear-gradient(
+      0deg,
+      rgba(255, 255, 255, 0.02) 0,
+      rgba(255, 255, 255, 0.02) 1px,
+      transparent 1px,
+      transparent 6px
+    );
+  box-shadow:
+    0 0 80px rgba(255, 170, 0, 0.1),
+    inset 0 0 32px rgba(255, 224, 140, 0.05);
+}
+
+#lore-label {
+  margin-bottom: 14px;
+  color: var(--color-warning);
+  font-size: 10px;
+  letter-spacing: 6px;
+  opacity: 0.6;
+}
+
+#lore-title {
+  margin-bottom: 18px;
+  color: var(--color-text);
+  font-size: 24px;
+  letter-spacing: 6px;
+  text-transform: uppercase;
+}
+
+#lore-body {
+  color: var(--color-text);
+  font-size: 15px;
+  line-height: 1.9;
+  letter-spacing: 2px;
+  opacity: 0.72;
+}
+
+#lore-close {
+  margin-top: 24px;
+  color: var(--color-safe);
+  font-size: 11px;
+  letter-spacing: 4px;
+  text-align: center;
+  opacity: 0.55;
+  animation: pulse-calm 2s ease-in-out infinite;
 }
 
 #inspect-overlay::before {

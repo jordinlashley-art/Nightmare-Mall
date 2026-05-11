@@ -1,6 +1,7 @@
 import { GameState, ITEM_TYPES, updateState } from '../systems/state.js';
 import { startGameSystems } from '../main.js';
 import { initMainMenu, playEntryAnimation } from './mainMenu.js';
+import { submitLeaderboardScore } from '../systems/leaderboard.js';
 
 const DEATH_OPTIONS_COUNT = 2;
 const WIN_OPTIONS_COUNT = 2;
@@ -216,6 +217,7 @@ function resetGameState() {
     playerReachedExit: false,
     isPaused: false,
     isInspecting: false,
+    loreNotesFound: [],
     demonProximity: {
       north: 0,
       south: 0,
@@ -228,6 +230,7 @@ function resetGameState() {
 function resetGameplayUIForNextRun() {
   const pauseMenu = document.getElementById('pause-menu');
   const inspectOverlay = document.getElementById('inspect-overlay');
+  const loreOverlay = document.getElementById('lore-overlay');
   const plantUI = document.getElementById('plant-ui');
   const canvas = document.querySelector('canvas');
 
@@ -239,6 +242,8 @@ function resetGameplayUIForNextRun() {
     inspectOverlay.style.opacity = '0';
     inspectOverlay.style.visibility = 'hidden';
   }
+
+  loreOverlay?.classList.remove('active');
 
   if (canvas) {
     canvas.style.opacity = '1';
@@ -407,12 +412,17 @@ function incrementItemsFound() {
 
 // Returns the elapsed run time formatted as M:SS.
 function getFormattedTime() {
-  const startedAt = runStats.startTime ?? Date.now();
-  const elapsedSeconds = Math.max(0, Math.floor((Date.now() - startedAt) / 1000));
+  const elapsedSeconds = getElapsedSeconds();
   const minutes = Math.floor(elapsedSeconds / 60);
   const seconds = elapsedSeconds % 60;
 
   return `${minutes}:${String(seconds).padStart(2, '0')}`;
+}
+
+function getElapsedSeconds() {
+  const startedAt = runStats.startTime ?? Date.now();
+
+  return Math.max(0, Math.floor((Date.now() - startedAt) / 1000));
 }
 
 // Injects the death and win screen DOM shells into the document body.
@@ -530,6 +540,12 @@ function triggerDeathScreen() {
   winInteractive = false;
   deathIndex = 0;
   runStats.fearAtEnd = GameState.fear;
+  submitLeaderboardScore({
+    outcome: 'FOUND',
+    timeSeconds: getElapsedSeconds(),
+    itemsFound: runStats.itemsFound,
+    fear: runStats.fearAtEnd,
+  });
   updateState({ isAlive: false });
   hideHUD();
   showEndShell('death');
@@ -586,6 +602,12 @@ function triggerWinScreen() {
   deathInteractive = false;
   winIndex = 0;
   runStats.fearAtEnd = GameState.fear;
+  submitLeaderboardScore({
+    outcome: 'ESCAPED',
+    timeSeconds: getElapsedSeconds(),
+    itemsFound: runStats.itemsFound,
+    fear: runStats.fearAtEnd,
+  });
   updateState({ explosivesPlanted: true });
   hideHUD();
   showEndShell('win');

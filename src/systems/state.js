@@ -19,6 +19,8 @@ const GameState = {
   isInspecting: false,
   flashlightOn: false,
   flashlightVisible: false,
+  difficulty: 'normal',
+  loreNotesFound: [],
 };
 
 const ITEM_TYPES = {
@@ -62,7 +64,12 @@ const ITEM_TYPES = {
 
 // Applies a partial state update and returns the current game state.
 function updateState(patch) {
-  const shouldNotifyStateListeners = ['inventory', 'activeSlot'].some((key) => key in patch);
+  const shouldNotifyStateListeners = [
+    'inventory',
+    'activeSlot',
+    'difficulty',
+    'loreNotesFound',
+  ].some((key) => key in patch);
 
   Object.assign(GameState, patch);
 

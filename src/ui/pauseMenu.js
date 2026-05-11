@@ -176,6 +176,7 @@ function resetGameStateForMenu() {
     explosivesPlanted: false,
     isPaused: false,
     isInspecting: false,
+    loreNotesFound: [],
     demonProximity: {
       north: 0,
       south: 0,

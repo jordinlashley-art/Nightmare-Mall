@@ -6,6 +6,7 @@ import { scene } from './core/scene.js';
 import { initEnvironment } from './world/environment.js';
 import { initDemon, resetDemon, updateDemon } from './world/demon.js';
 import { initItemSpawns, updateItems } from './world/items.js';
+import { initLoreNotes, updateLoreNotes } from './world/loreNotes.js';
 import { initPortal, resetPortal, updatePortal } from './world/portal.js';
 import {
   initHUD,
@@ -52,6 +53,12 @@ import {
   onRadioUse,
   onSlotSelect,
 } from './systems/input.js';
+import {
+  initAudioSystem,
+  playFlashlightClickSound,
+  resumeAudio,
+  updateAudio,
+} from './systems/audio.js';
 
 let animationLoopStarted = false;
 let gameSystemsStarted = false;
@@ -77,9 +84,11 @@ function animate() {
 
   updatePlayer(delta);
   updateLighting(delta);
+  updateAudio(delta);
 
   if (!GameState.isPaused) {
     updateItems(delta);
+    updateLoreNotes(delta);
     updateDetection(delta);
     updateDemon(delta);
     updatePortal(delta);
@@ -100,7 +109,10 @@ function bindGameInputHandlers() {
     () => closeInspectOverlay(),
   );
   onSlotSelect(setActiveSlot);
-  onFlashlightToggle(() => toggleFlashlight());
+  onFlashlightToggle(() => {
+    toggleFlashlight();
+    playFlashlightClickSound();
+  });
   onRadioUse((position) => triggerRadioDistraction(position));
 }
 
@@ -109,6 +121,8 @@ function startGameSystems() {
   initEndScreens();
   setupEndNavigation();
   initRunStats();
+  initAudioSystem();
+  resumeAudio();
 
   if (gameSystemsStarted) {
     initEnvironment(scene);
@@ -117,6 +131,7 @@ function startGameSystems() {
     initLighting();
     resetPortal();
     initItemSpawns();
+    initLoreNotes();
     initPlayer(new THREE.Vector3(0, 1.7, 5));
     initDetection();
     lastTime = performance.now();
@@ -136,6 +151,7 @@ function startGameSystems() {
   initLighting();
   initPortal();
   initItemSpawns();
+  initLoreNotes();
   initPlayer(new THREE.Vector3(0, 1.7, 5));
   initDetection();
   lastTime = performance.now();

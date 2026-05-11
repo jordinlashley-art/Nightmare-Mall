@@ -9,6 +9,8 @@ const MATERIAL_COLORS = {
   displayShelf: 0x2e2a2b,
   portalFloor: 0x1a0a0a,
   sign: 0x333333,
+  kiosk: 0x24191a,
+  kioskAccent: 0x4a0f0f,
 };
 
 const MALL_CONFIG = {
@@ -98,6 +100,30 @@ const STORE_DEFINITIONS = [
     wing: 'south',
     index: 4,
     position: new THREE.Vector3(36, 0, 29),
+  },
+  {
+    id: 'S11',
+    name: 'CINEMA NOIR',
+    kind: 'kiosk',
+    position: new THREE.Vector3(-11, 0, -10),
+  },
+  {
+    id: 'S12',
+    name: 'PET HAVEN',
+    kind: 'kiosk',
+    position: new THREE.Vector3(11, 0, -10),
+  },
+  {
+    id: 'S13',
+    name: 'RECORD DEN',
+    kind: 'kiosk',
+    position: new THREE.Vector3(-11, 0, 10),
+  },
+  {
+    id: 'S14',
+    name: 'CANDLE CART',
+    kind: 'kiosk',
+    position: new THREE.Vector3(11, 0, 10),
   },
 ];
 
@@ -319,6 +345,11 @@ function buildFoodCourt(targetScene) {
 }
 
 function buildStore(targetScene, store) {
+  if (store.kind === 'kiosk') {
+    buildKioskStore(targetScene, store);
+    return;
+  }
+
   const {
     storeWidth,
     storeDepth,
@@ -412,6 +443,75 @@ function buildStore(targetScene, store) {
     color: MATERIAL_COLORS.sign,
     receiveShadow: false,
     castShadow: false,
+    addToCollision: false,
+  }, targetScene);
+}
+
+function buildKioskStore(targetScene, store) {
+  const { x, z } = store.position;
+  const accentOffset = store.id === 'S11' || store.id === 'S14' ? -0.4 : 0.4;
+
+  createBox({
+    w: 5,
+    h: 0.15,
+    d: 4,
+    x,
+    y: 0.02,
+    z,
+    color: MATERIAL_COLORS.kiosk,
+    receiveShadow: true,
+    castShadow: false,
+    addToCollision: false,
+  }, targetScene);
+
+  createBox({
+    w: 4.4,
+    h: 1.0,
+    d: 1.2,
+    x,
+    y: 0.5,
+    z,
+    color: MATERIAL_COLORS.kioskAccent,
+    receiveShadow: true,
+    castShadow: true,
+    addToCollision: true,
+  }, targetScene);
+
+  createBox({
+    w: 3.8,
+    h: 0.15,
+    d: 3.4,
+    x,
+    y: 2.0,
+    z,
+    color: MATERIAL_COLORS.sign,
+    receiveShadow: false,
+    castShadow: true,
+    addToCollision: false,
+  }, targetScene);
+
+  createBox({
+    w: 0.15,
+    h: 1.8,
+    d: 0.15,
+    x: x - 2,
+    y: 1.05,
+    z: z + accentOffset,
+    color: MATERIAL_COLORS.displayShelf,
+    receiveShadow: true,
+    castShadow: true,
+    addToCollision: false,
+  }, targetScene);
+  createBox({
+    w: 0.15,
+    h: 1.8,
+    d: 0.15,
+    x: x + 2,
+    y: 1.05,
+    z: z + accentOffset,
+    color: MATERIAL_COLORS.displayShelf,
+    receiveShadow: true,
+    castShadow: true,
     addToCollision: false,
   }, targetScene);
 }
