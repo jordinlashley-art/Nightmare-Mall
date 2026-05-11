@@ -12,6 +12,7 @@ const trackedKeys = new Set([
   'shift',
   'c',
   'e',
+  'f',
   'tab',
   '1',
   '2',
@@ -24,6 +25,7 @@ const interactCallbacks = new Set();
 const inspectHoldCallbacks = new Set();
 const slotSelectCallbacks = new Set();
 const crouchToggleCallbacks = new Set();
+const flashlightToggleCallbacks = new Set();
 const INTERACT_DEBOUNCE_MS = 500;
 let lastInteractAt = 0;
 
@@ -88,6 +90,10 @@ function handleKeydown(event) {
 
   if (key === 'c' && !event.repeat) {
     crouchToggleCallbacks.forEach((callback) => callback());
+  }
+
+  if (key === 'f' && !event.repeat) {
+    flashlightToggleCallbacks.forEach((callback) => callback());
   }
 
   if (
@@ -165,9 +171,19 @@ function registerCrouchToggle(callback) {
   };
 }
 
+// Registers a callback for flashlight toggle key presses.
+function onFlashlightToggle(callback) {
+  flashlightToggleCallbacks.add(callback);
+
+  return () => {
+    flashlightToggleCallbacks.delete(callback);
+  };
+}
+
 export {
   keyboardState,
   isKeyPressed,
+  onFlashlightToggle,
   onInspectHold,
   onInteract,
   onSlotSelect,

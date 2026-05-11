@@ -1,5 +1,6 @@
 import * as THREE from 'three';
 import { camera } from './core/camera.js';
+import { initLighting, toggleFlashlight, updateLighting } from './core/lighting.js';
 import { renderer } from './core/renderer.js';
 import { scene } from './core/scene.js';
 import { initEnvironment } from './world/environment.js';
@@ -41,7 +42,12 @@ import {
 import { initPlantUI, startPlantSequence } from './ui/plantUI.js';
 import { initPlayer, updatePlayer } from './systems/player.js';
 import { GameState, updateState } from './systems/state.js';
-import { onInspectHold, onInteract, onSlotSelect } from './systems/input.js';
+import {
+  onFlashlightToggle,
+  onInspectHold,
+  onInteract,
+  onSlotSelect,
+} from './systems/input.js';
 
 let animationLoopStarted = false;
 let gameSystemsStarted = false;
@@ -70,6 +76,7 @@ function animate() {
   }
 
   updatePlayer(delta);
+  updateLighting(delta);
 
   if (!GameState.isInspecting && !GameState.isPaused) {
     updateStealthIndicator();
@@ -99,6 +106,7 @@ function bindGameInputHandlers() {
   onInteract(() => {
     startPlantSequence();
   });
+  onFlashlightToggle(() => toggleFlashlight());
 }
 
 // Initializes HUD, overlays, input handlers, and the render loop after START.
@@ -109,6 +117,7 @@ function startGameSystems() {
 
   if (gameSystemsStarted) {
     initEnvironment(scene);
+    initLighting();
     initPlayer(new THREE.Vector3(0, 1.7, 5));
     lastTime = performance.now();
     return;
@@ -123,6 +132,7 @@ function startGameSystems() {
   setupPauseNavigation();
   bindGameInputHandlers();
   initEnvironment(scene);
+  initLighting();
   initPlayer(new THREE.Vector3(0, 1.7, 5));
   lastTime = performance.now();
 
