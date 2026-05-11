@@ -20,6 +20,8 @@ const playerState = {
   isMoving: false,
   targetHeight: 1.7,
   currentHeight: 1.7,
+  standHeight: 1.7,
+  onRaisedWalkway: false,
   bobTime: 0,
   bobAmount: 0,
   yaw: 0,
@@ -36,6 +38,12 @@ const PLAYER_CONFIG = {
   bobWalk: { amplitude: 0.04, frequency: 2.0 },
   bobSprint: { amplitude: 0.08, frequency: 3.0 },
   bobCrouch: { amplitude: 0.02, frequency: 1.5 },
+};
+const RAISED_WALKWAY_CONFIG = {
+  x: -8,
+  halfWidth: 0.75,
+  minZ: -18,
+  maxZ: 18,
 };
 
 function getHUD() {
@@ -62,6 +70,10 @@ function isWithinMallBounds(position) {
 function checkCollision(newPosition) {
   if (!isWithinMallBounds(newPosition)) {
     return true;
+  }
+
+  if (playerState.onRaisedWalkway && GameState.ropeUsed) {
+    return false;
   }
 
   const playerBox = new THREE.Box3(
@@ -135,10 +147,14 @@ function syncPlayerRig() {
 }
 
 function handleCrouchToggle() {
+  if (playerState.onRaisedWalkway) {
+    return;
+  }
+
   playerState.isCrouching = !playerState.isCrouching;
   playerState.targetHeight = playerState.isCrouching
     ? PLAYER_CONFIG.crouchHeight
-    : PLAYER_CONFIG.standHeight;
+    : playerState.standHeight;
 
   updateState({
     isHidden: playerState.isCrouching,
@@ -194,6 +210,8 @@ function initPlayer(startPosition = new THREE.Vector3(0, PLAYER_CONFIG.standHeig
   playerState.position.copy(startPosition);
   playerState.currentHeight = startPosition.y;
   playerState.targetHeight = startPosition.y;
+  playerState.standHeight = PLAYER_CONFIG.standHeight;
+  playerState.onRaisedWalkway = false;
   playerState.velocity.set(0, 0, 0);
   playerState.bobTime = 0;
   playerState.bobAmount = 0;
@@ -289,6 +307,19 @@ function updatePlayer(delta) {
 
   if (!checkCollision(nextZ)) {
     playerState.position.z = nextZ.z;
+  }
+
+  if (playerState.onRaisedWalkway && GameState.ropeUsed) {
+    playerState.position.x = THREE.MathUtils.clamp(
+      playerState.position.x,
+      RAISED_WALKWAY_CONFIG.x - RAISED_WALKWAY_CONFIG.halfWidth,
+      RAISED_WALKWAY_CONFIG.x + RAISED_WALKWAY_CONFIG.halfWidth,
+    );
+    playerState.position.z = THREE.MathUtils.clamp(
+      playerState.position.z,
+      RAISED_WALKWAY_CONFIG.minZ,
+      RAISED_WALKWAY_CONFIG.maxZ,
+    );
   }
 
   if (playerState.isSprinting) {

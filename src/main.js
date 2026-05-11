@@ -1,6 +1,6 @@
 import * as THREE from 'three';
 import { camera } from './core/camera.js';
-import { initLighting, toggleFlashlight, updateLighting } from './core/lighting.js';
+import { initLighting, updateLighting } from './core/lighting.js';
 import { renderer } from './core/renderer.js';
 import { scene } from './core/scene.js';
 import { initEnvironment } from './world/environment.js';
@@ -12,6 +12,7 @@ import {
   initHUD,
   setActiveSlot,
   updateObjectiveTracker,
+  updateUseHints,
 } from './ui/hud.js';
 import { initCompass } from './ui/compass.js';
 import {
@@ -44,13 +45,20 @@ import { initPlayer, updatePlayer } from './systems/player.js';
 import { GameState, updateState } from './systems/state.js';
 import {
   initDetection,
-  triggerRadioDistraction,
   updateDetection,
 } from './systems/detection.js';
 import {
+  initItemActions,
+  updateItemActions,
+  useActiveItem,
+  useFlashlight,
+  useRadio,
+} from './systems/itemActions.js';
+import {
   onFlashlightToggle,
   onInspectHold,
-  onRadioUse,
+  onItemUse,
+  onRadioThrow,
   onSlotSelect,
 } from './systems/input.js';
 import {
@@ -88,6 +96,7 @@ function animate() {
 
   if (!GameState.isPaused) {
     updateItems(delta);
+    updateItemActions(delta);
     updateLoreNotes(delta);
     updateDetection(delta);
     updateDemon(delta);
@@ -95,6 +104,7 @@ function animate() {
   }
 
   updateObjectiveTracker();
+  updateUseHints();
   renderer.render(scene, camera);
 }
 
@@ -110,10 +120,12 @@ function bindGameInputHandlers() {
   );
   onSlotSelect(setActiveSlot);
   onFlashlightToggle(() => {
-    toggleFlashlight();
-    playFlashlightClickSound();
+    if (useFlashlight()) {
+      playFlashlightClickSound();
+    }
   });
-  onRadioUse((position) => triggerRadioDistraction(position));
+  onItemUse(() => useActiveItem());
+  onRadioThrow(() => useRadio());
 }
 
 // Initializes HUD, overlays, input handlers, and the render loop after START.
@@ -129,6 +141,7 @@ function startGameSystems() {
     initDemon();
     resetDemon();
     initLighting();
+    initItemActions();
     resetPortal();
     initItemSpawns();
     initLoreNotes();
@@ -149,6 +162,7 @@ function startGameSystems() {
   initEnvironment(scene);
   initDemon();
   initLighting();
+  initItemActions();
   initPortal();
   initItemSpawns();
   initLoreNotes();

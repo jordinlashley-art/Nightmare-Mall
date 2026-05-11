@@ -299,8 +299,28 @@ function initMainMenu() {
           <span class="howto-desc">Interact / Pick up</span>
         </div>
         <div class="howto-row">
+          <span class="howto-key">F</span>
+          <span class="howto-desc">Toggle flashlight</span>
+        </div>
+        <div class="howto-row">
+          <span class="howto-key">Q</span>
+          <span class="howto-desc">Use active item</span>
+        </div>
+        <div class="howto-row">
+          <span class="howto-key">R</span>
+          <span class="howto-desc">Throw radio</span>
+        </div>
+        <div class="howto-row">
           <span class="howto-key">TAB</span>
           <span class="howto-desc">Inspect item</span>
+        </div>
+        <div class="howto-row">
+          <span class="howto-key">SHIFT</span>
+          <span class="howto-desc">Sprint (raises fear)</span>
+        </div>
+        <div class="howto-row">
+          <span class="howto-key">C</span>
+          <span class="howto-desc">Crouch (reduces detection)</span>
         </div>
         <div class="howto-row">
           <span class="howto-key">1 2 3 4</span>
@@ -309,6 +329,33 @@ function initMainMenu() {
         <div class="howto-row">
           <span class="howto-key">ESC</span>
           <span class="howto-desc">Pause</span>
+        </div>
+        <div class="howto-divider"></div>
+        <div class="howto-items">
+          <div class="howto-item-row">
+            <span>🔦</span>
+            <span>Flashlight — F to toggle. Demon sees the beam.</span>
+          </div>
+          <div class="howto-item-row">
+            <span>🔥</span>
+            <span>Lighter — Q to toggle. Short range. Safer.</span>
+          </div>
+          <div class="howto-item-row">
+            <span>📻</span>
+            <span>Radio — R to throw. Distracts demon 6 seconds.</span>
+          </div>
+          <div class="howto-item-row">
+            <span>🩹</span>
+            <span>Medkit — Q to use. Reduces fear by 40.</span>
+          </div>
+          <div class="howto-item-row">
+            <span>🪢</span>
+            <span>Rope — Q near climb point. Shortcut above the demon.</span>
+          </div>
+          <div class="howto-item-row">
+            <span>💥</span>
+            <span>Explosive — E at the portal. End this.</span>
+          </div>
         </div>
         <div class="howto-divider"></div>
         <div class="howto-objective">
