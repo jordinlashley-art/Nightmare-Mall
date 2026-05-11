@@ -2,12 +2,15 @@ import * as THREE from 'three';
 import { scene } from '../core/scene.js';
 import { GameState, updateState } from '../systems/state.js';
 import { getPlayerPosition, getPlayerState } from '../systems/player.js';
+import { getCurrentDifficulty } from '../systems/difficulty.js';
 import { triggerDeathScreen } from '../ui/endScreens.js';
 
 const IS_DEV = true;
 const ALERT_PAUSE_TIME = 0.5;
 
 export const DEMON_CONFIG = {
+  id: 'demon-stalker',
+  variantName: 'STALKER',
   patrolSpeed: 2.5,
   alertedSpeed: 4.0,
   huntingSpeed: 6.0,
@@ -20,6 +23,29 @@ export const DEMON_CONFIG = {
   idleMinTime: 1.0,
   idleMaxTime: 3.0,
   startPosition: new THREE.Vector3(40, 0, 40),
+  meshScale: 1,
+  audioWeight: 1,
+  eyeColor: 0xff0000,
+};
+
+export const SKITTER_DEMON_CONFIG = {
+  id: 'demon-skitter',
+  variantName: 'SKITTER',
+  patrolSpeed: 3.4,
+  alertedSpeed: 5.2,
+  huntingSpeed: 7.4,
+  turnSpeed: 4.2,
+  arrivalThreshold: 0.75,
+  catchDistance: 0.65,
+  alertTimeout: 6.5,
+  huntLostTime: 2.4,
+  idleChance: 0.12,
+  idleMinTime: 0.35,
+  idleMaxTime: 1.1,
+  startPosition: new THREE.Vector3(-40, 0, -40),
+  meshScale: 0.72,
+  audioWeight: 0.75,
+  eyeColor: 0xff6600,
 };
 
 export const PATROL_WAYPOINTS = [
@@ -44,6 +70,9 @@ export const PATROL_WAYPOINTS = [
 ];
 
 const demonState = {
+  id: DEMON_CONFIG.id,
+  variantName: DEMON_CONFIG.variantName,
+  config: DEMON_CONFIG,
   position: DEMON_CONFIG.startPosition.clone(),
   targetPosition: new THREE.Vector3(0, 0, 0),
   currentWaypoint: 0,
@@ -59,7 +88,32 @@ const demonState = {
   isDead: false,
   alertPauseTimer: 0,
   advanceAfterIdle: true,
+  audioWeight: DEMON_CONFIG.audioWeight,
 };
+
+const skitterDemonState = {
+  id: SKITTER_DEMON_CONFIG.id,
+  variantName: SKITTER_DEMON_CONFIG.variantName,
+  config: SKITTER_DEMON_CONFIG,
+  position: SKITTER_DEMON_CONFIG.startPosition.clone(),
+  targetPosition: new THREE.Vector3(0, 0, 0),
+  currentWaypoint: Math.floor(PATROL_WAYPOINTS.length / 2),
+  behaviorState: 'PATROL',
+  alertTimer: 0,
+  huntTimer: 0,
+  idleTimer: 0,
+  isIdle: false,
+  lastKnownPlayerPos: new THREE.Vector3(),
+  lastStimulusPos: new THREE.Vector3(),
+  mesh: null,
+  eyeLights: [],
+  isDead: false,
+  alertPauseTimer: 0,
+  advanceAfterIdle: true,
+  audioWeight: SKITTER_DEMON_CONFIG.audioWeight,
+};
+
+const demonStates = [demonState, skitterDemonState];
 
 const waypointMarkers = [];
 
@@ -70,15 +124,18 @@ function getGroundPosition(position) {
   return groundPosition;
 }
 
-function createDemonMesh() {
-  if (demonState.mesh) {
-    demonState.mesh.position.copy(demonState.position);
-    return demonState.mesh;
+function createDemonMesh(state = demonState) {
+  const { config } = state;
+
+  if (state.mesh) {
+    state.mesh.position.copy(state.position);
+    return state.mesh;
   }
 
   const demonGroup = new THREE.Group();
-  demonGroup.name = 'DemonPatrolEntity';
-  demonGroup.position.copy(DEMON_CONFIG.startPosition);
+  demonGroup.name = `DemonPatrolEntity_${config.variantName}`;
+  demonGroup.position.copy(config.startPosition);
+  demonGroup.scale.setScalar(config.meshScale);
 
   const bodyGeo = typeof THREE.CapsuleGeometry === 'function'
     ? new THREE.CapsuleGeometry(0.4, 1.2, 4, 8)
@@ -108,7 +165,7 @@ function createDemonMesh() {
 
   const eyeGeo = new THREE.SphereGeometry(0.06, 6, 4);
   const eyeMat = new THREE.MeshBasicMaterial({
-    color: 0xff0000,
+    color: config.eyeColor,
   });
   const leftEye = new THREE.Mesh(eyeGeo, eyeMat);
   const rightEye = new THREE.Mesh(eyeGeo, eyeMat);
@@ -118,17 +175,17 @@ function createDemonMesh() {
   demonGroup.add(leftEye);
   demonGroup.add(rightEye);
 
-  const leftGlow = new THREE.PointLight(0xff0000, 0.5, 2, 2);
-  const rightGlow = new THREE.PointLight(0xff0000, 0.5, 2, 2);
+  const leftGlow = new THREE.PointLight(config.eyeColor, 0.5, 2, 2);
+  const rightGlow = new THREE.PointLight(config.eyeColor, 0.5, 2, 2);
 
   leftGlow.position.copy(leftEye.position);
   rightGlow.position.copy(rightEye.position);
   demonGroup.add(leftGlow);
   demonGroup.add(rightGlow);
-  demonState.eyeLights = [leftGlow, rightGlow];
+  state.eyeLights = [leftGlow, rightGlow];
 
   scene.add(demonGroup);
-  demonState.mesh = demonGroup;
+  state.mesh = demonGroup;
   return demonGroup;
 }
 
@@ -153,26 +210,26 @@ function createWaypointMarkers() {
   });
 }
 
-function updateEyeGlow() {
+function updateEyeGlow(state = demonState) {
   let eyeIntensity = 0.5;
 
-  if (demonState.behaviorState === 'ALERTED') {
+  if (state.behaviorState === 'ALERTED') {
     eyeIntensity = 1.2;
-  } else if (demonState.behaviorState === 'HUNTING') {
+  } else if (state.behaviorState === 'HUNTING') {
     eyeIntensity = 2.5 + Math.sin(Date.now() * 0.01) * 0.5;
   }
 
-  demonState.eyeLights.forEach((light) => {
+  state.eyeLights.forEach((light) => {
     light.intensity = eyeIntensity;
   });
 }
 
-function moveTowardTarget(delta, speed) {
-  if (!demonState.mesh) {
+function moveTowardTarget(state, delta, speed) {
+  if (!state.mesh) {
     return;
   }
 
-  const direction = demonState.targetPosition.clone().sub(demonState.position);
+  const direction = state.targetPosition.clone().sub(state.position);
 
   direction.y = 0;
 
@@ -185,63 +242,63 @@ function moveTowardTarget(delta, speed) {
   direction.normalize();
 
   const targetAngle = Math.atan2(direction.x, direction.z);
-  const currentAngle = demonState.mesh.rotation.y;
+  const currentAngle = state.mesh.rotation.y;
   const angleDiff = THREE.MathUtils.euclideanModulo(
     targetAngle - currentAngle + Math.PI,
     Math.PI * 2,
   ) - Math.PI;
 
-  demonState.mesh.rotation.y += Math.sign(angleDiff) * Math.min(
+  state.mesh.rotation.y += Math.sign(angleDiff) * Math.min(
     Math.abs(angleDiff),
-    DEMON_CONFIG.turnSpeed * delta,
+    state.config.turnSpeed * delta,
   );
 
   const moveAmount = Math.min(dist, speed * delta);
 
-  demonState.position.addScaledVector(direction, moveAmount);
-  demonState.mesh.position.copy(demonState.position);
+  state.position.addScaledVector(direction, moveAmount);
+  state.mesh.position.copy(state.position);
 }
 
-function advanceWaypoint() {
-  demonState.currentWaypoint = (demonState.currentWaypoint + 1) % PATROL_WAYPOINTS.length;
-  demonState.targetPosition.copy(PATROL_WAYPOINTS[demonState.currentWaypoint]);
+function advanceWaypoint(state = demonState) {
+  state.currentWaypoint = (state.currentWaypoint + 1) % PATROL_WAYPOINTS.length;
+  state.targetPosition.copy(PATROL_WAYPOINTS[state.currentWaypoint]);
 }
 
-function enterIdle(advanceAfterIdle = true) {
-  demonState.behaviorState = 'IDLE';
-  demonState.isIdle = true;
-  demonState.advanceAfterIdle = advanceAfterIdle;
-  demonState.idleTimer = DEMON_CONFIG.idleMinTime + Math.random() * (
-    DEMON_CONFIG.idleMaxTime - DEMON_CONFIG.idleMinTime
+function enterIdle(state, advanceAfterIdle = true) {
+  state.behaviorState = 'IDLE';
+  state.isIdle = true;
+  state.advanceAfterIdle = advanceAfterIdle;
+  state.idleTimer = state.config.idleMinTime + Math.random() * (
+    state.config.idleMaxTime - state.config.idleMinTime
   );
 }
 
-function checkWaypointArrival() {
-  const dist = demonState.position.distanceTo(PATROL_WAYPOINTS[demonState.currentWaypoint]);
+function checkWaypointArrival(state = demonState) {
+  const dist = state.position.distanceTo(PATROL_WAYPOINTS[state.currentWaypoint]);
 
-  if (dist < DEMON_CONFIG.arrivalThreshold) {
-    if (Math.random() < DEMON_CONFIG.idleChance) {
-      enterIdle(true);
+  if (dist < state.config.arrivalThreshold) {
+    if (Math.random() < state.config.idleChance) {
+      enterIdle(state, true);
     } else {
-      advanceWaypoint();
+      advanceWaypoint(state);
     }
   }
 }
 
-function checkAlertArrival() {
-  const dist = demonState.position.distanceTo(demonState.targetPosition);
+function checkAlertArrival(state = demonState) {
+  const dist = state.position.distanceTo(state.targetPosition);
 
-  if (dist < DEMON_CONFIG.arrivalThreshold) {
-    enterIdle(false);
+  if (dist < state.config.arrivalThreshold) {
+    enterIdle(state, false);
   }
 }
 
-function returnToPatrol() {
+function returnToPatrol(state = demonState) {
   let nearestWP = 0;
   let nearestDist = Infinity;
 
   PATROL_WAYPOINTS.forEach((wp, i) => {
-    const dist = demonState.position.distanceTo(wp);
+    const dist = state.position.distanceTo(wp);
 
     if (dist < nearestDist) {
       nearestDist = dist;
@@ -249,19 +306,19 @@ function returnToPatrol() {
     }
   });
 
-  demonState.behaviorState = 'PATROL';
-  demonState.alertTimer = 0;
-  demonState.huntTimer = 0;
-  demonState.idleTimer = 0;
-  demonState.alertPauseTimer = 0;
-  demonState.isIdle = false;
-  demonState.advanceAfterIdle = true;
-  demonState.currentWaypoint = nearestWP;
-  demonState.targetPosition.copy(PATROL_WAYPOINTS[nearestWP]);
+  state.behaviorState = 'PATROL';
+  state.alertTimer = 0;
+  state.huntTimer = 0;
+  state.idleTimer = 0;
+  state.alertPauseTimer = 0;
+  state.isIdle = false;
+  state.advanceAfterIdle = true;
+  state.currentWaypoint = nearestWP;
+  state.targetPosition.copy(PATROL_WAYPOINTS[nearestWP]);
 }
 
-function checkPassiveStimuli(playerPosition, distToPlayer) {
-  if (demonState.behaviorState === 'HUNTING') {
+function checkPassiveStimuli(state, playerPosition, distToPlayer) {
+  if (state.behaviorState === 'HUNTING') {
     return;
   }
 
@@ -277,9 +334,13 @@ function checkPassiveStimuli(playerPosition, distToPlayer) {
   }
 }
 
+function getAdjustedSpeed(baseSpeed) {
+  return baseSpeed * getCurrentDifficulty().demonSpeedMultiplier;
+}
+
 // Initializes the demon mesh, patrol target, and dev waypoint markers.
 function initDemon() {
-  createDemonMesh();
+  demonStates.forEach((state) => createDemonMesh(state));
   resetDemon();
 
   if (IS_DEV) {
@@ -287,172 +348,209 @@ function initDemon() {
   }
 }
 
-// Updates demon behavior, movement, eye glow, and catch detection for the frame.
-function updateDemon(delta) {
+function updateSingleDemon(state, delta, playerPos) {
   if (
     GameState.isPaused
     || GameState.isInspecting
     || GameState.isAlive === false
-    || demonState.isDead
+    || state.isDead
   ) {
     return;
   }
 
-  const playerPos = getGroundPosition(getPlayerPosition());
-  const distToPlayer = demonState.position.distanceTo(playerPos);
+  const distToPlayer = state.position.distanceTo(playerPos);
 
-  if (distToPlayer < DEMON_CONFIG.catchDistance) {
-    demonState.isDead = true;
+  if (distToPlayer < state.config.catchDistance) {
+    state.isDead = true;
     updateState({ isAlive: false });
     triggerDeathScreen();
     return;
   }
 
-  checkPassiveStimuli(playerPos, distToPlayer);
+  checkPassiveStimuli(state, playerPos, distToPlayer);
 
-  switch (demonState.behaviorState) {
+  switch (state.behaviorState) {
     case 'PATROL':
-      moveTowardTarget(delta, DEMON_CONFIG.patrolSpeed);
-      checkWaypointArrival();
+      moveTowardTarget(state, delta, getAdjustedSpeed(state.config.patrolSpeed));
+      checkWaypointArrival(state);
       break;
     case 'ALERTED':
-      demonState.alertTimer += delta;
+      state.alertTimer += delta;
 
-      if (demonState.alertPauseTimer > 0) {
-        demonState.alertPauseTimer = Math.max(0, demonState.alertPauseTimer - delta);
+      if (state.alertPauseTimer > 0) {
+        state.alertPauseTimer = Math.max(0, state.alertPauseTimer - delta);
         break;
       }
 
-      if (demonState.alertTimer > DEMON_CONFIG.alertTimeout) {
-        returnToPatrol();
+      if (state.alertTimer > state.config.alertTimeout) {
+        returnToPatrol(state);
         break;
       }
 
-      moveTowardTarget(delta, DEMON_CONFIG.alertedSpeed);
-      checkAlertArrival();
+      moveTowardTarget(state, delta, getAdjustedSpeed(state.config.alertedSpeed));
+      checkAlertArrival(state);
       break;
     case 'HUNTING':
-      demonState.huntTimer += delta;
+      state.huntTimer += delta;
 
-      if (demonState.huntTimer > DEMON_CONFIG.huntLostTime) {
+      if (state.huntTimer > state.config.huntLostTime) {
         lostPlayer();
         break;
       }
 
-      demonState.targetPosition.copy(playerPos);
-      demonState.lastKnownPlayerPos.copy(playerPos);
-      moveTowardTarget(delta, DEMON_CONFIG.huntingSpeed);
+      state.targetPosition.copy(playerPos);
+      state.lastKnownPlayerPos.copy(playerPos);
+      moveTowardTarget(state, delta, getAdjustedSpeed(state.config.huntingSpeed));
       break;
     case 'IDLE':
-      demonState.idleTimer -= delta;
+      state.idleTimer -= delta;
 
-      if (demonState.idleTimer <= 0) {
-        demonState.isIdle = false;
+      if (state.idleTimer <= 0) {
+        state.isIdle = false;
 
-        if (demonState.advanceAfterIdle) {
-          demonState.behaviorState = 'PATROL';
-          advanceWaypoint();
+        if (state.advanceAfterIdle) {
+          state.behaviorState = 'PATROL';
+          advanceWaypoint(state);
         } else {
-          returnToPatrol();
+          returnToPatrol(state);
         }
       }
       break;
     default:
-      returnToPatrol();
+      returnToPatrol(state);
       break;
   }
 
-  updateEyeGlow();
+  updateEyeGlow(state);
+}
+
+// Updates demon behavior, movement, eye glow, and catch detection for the frame.
+function updateDemon(delta) {
+  const playerPos = getGroundPosition(getPlayerPosition());
+
+  demonStates.forEach((state) => updateSingleDemon(state, delta, playerPos));
 }
 
 // Alerts the demon to a stimulus position unless it is already hunting.
 function alertDemon(stimulusPosition) {
-  if (demonState.behaviorState === 'HUNTING' || demonState.isDead) {
-    return;
-  }
-
   const groundStimulus = getGroundPosition(stimulusPosition);
-  const wasAlerted = demonState.behaviorState === 'ALERTED';
 
-  demonState.behaviorState = 'ALERTED';
-  demonState.alertTimer = 0;
-  demonState.alertPauseTimer = wasAlerted ? 0 : ALERT_PAUSE_TIME;
-  demonState.isIdle = false;
-  demonState.advanceAfterIdle = true;
-  demonState.targetPosition.copy(groundStimulus);
-  demonState.lastStimulusPos.copy(groundStimulus);
+  demonStates.forEach((state) => {
+    if (state.behaviorState === 'HUNTING' || state.isDead) {
+      return;
+    }
+
+    const wasAlerted = state.behaviorState === 'ALERTED';
+
+    state.behaviorState = 'ALERTED';
+    state.alertTimer = 0;
+    state.alertPauseTimer = wasAlerted ? 0 : ALERT_PAUSE_TIME;
+    state.isIdle = false;
+    state.advanceAfterIdle = true;
+    state.targetPosition.copy(groundStimulus);
+    state.lastStimulusPos.copy(groundStimulus);
+  });
 }
 
 // Forces the demon into hunting mode against the current player position.
 function huntPlayer() {
-  if (demonState.isDead) {
-    return;
-  }
-
   const playerPos = getGroundPosition(getPlayerPosition());
 
-  demonState.behaviorState = 'HUNTING';
-  demonState.huntTimer = 0;
-  demonState.alertPauseTimer = 0;
-  demonState.isIdle = false;
-  demonState.advanceAfterIdle = true;
-  demonState.targetPosition.copy(playerPos);
-  demonState.lastKnownPlayerPos.copy(playerPos);
+  demonStates.forEach((state) => {
+    if (state.isDead) {
+      return;
+    }
+
+    state.behaviorState = 'HUNTING';
+    state.huntTimer = 0;
+    state.alertPauseTimer = 0;
+    state.isIdle = false;
+    state.advanceAfterIdle = true;
+    state.targetPosition.copy(playerPos);
+    state.lastKnownPlayerPos.copy(playerPos);
+  });
 }
 
 // Sends the demon to the last known player position after sight is lost.
 function lostPlayer() {
-  if (demonState.isDead) {
-    return;
-  }
+  demonStates.forEach((state) => {
+    if (state.isDead) {
+      return;
+    }
 
-  demonState.behaviorState = 'ALERTED';
-  demonState.alertTimer = 0;
-  demonState.huntTimer = 0;
-  demonState.alertPauseTimer = 0;
-  demonState.isIdle = false;
-  demonState.advanceAfterIdle = true;
-  demonState.targetPosition.copy(demonState.lastKnownPlayerPos);
+    state.behaviorState = 'ALERTED';
+    state.alertTimer = 0;
+    state.huntTimer = 0;
+    state.alertPauseTimer = 0;
+    state.isIdle = false;
+    state.advanceAfterIdle = true;
+    state.targetPosition.copy(state.lastKnownPlayerPos);
+  });
 }
 
 // Returns a cloned world-space demon position.
 function getDemonPosition() {
-  return demonState.position.clone();
+  return getDemonState().position.clone();
 }
 
 // Returns the live demon state object for detection and tuning systems.
 function getDemonState() {
-  return demonState;
+  const playerPos = getGroundPosition(getPlayerPosition());
+  let closestState = demonState;
+  let closestDistance = Infinity;
+
+  demonStates.forEach((state) => {
+    if (state.isDead) {
+      return;
+    }
+
+    const distance = state.position.distanceTo(playerPos);
+
+    if (distance < closestDistance) {
+      closestDistance = distance;
+      closestState = state;
+    }
+  });
+
+  return closestState;
+}
+
+// Returns the live demon states for proximity-based systems.
+function getDemonStates() {
+  return demonStates;
 }
 
 // Resets the demon to its starting position and default patrol behavior.
 function resetDemon() {
-  demonState.position.copy(DEMON_CONFIG.startPosition);
-  demonState.currentWaypoint = 0;
-  demonState.behaviorState = 'PATROL';
-  demonState.alertTimer = 0;
-  demonState.huntTimer = 0;
-  demonState.idleTimer = 0;
-  demonState.alertPauseTimer = 0;
-  demonState.isIdle = false;
-  demonState.isDead = false;
-  demonState.advanceAfterIdle = true;
-  demonState.targetPosition.copy(PATROL_WAYPOINTS[0]);
-  demonState.lastKnownPlayerPos.set(0, 0, 0);
-  demonState.lastStimulusPos.set(0, 0, 0);
+  demonStates.forEach((state, index) => {
+    state.position.copy(state.config.startPosition);
+    state.currentWaypoint = index === 0 ? 0 : Math.floor(PATROL_WAYPOINTS.length / 2);
+    state.behaviorState = 'PATROL';
+    state.alertTimer = 0;
+    state.huntTimer = 0;
+    state.idleTimer = 0;
+    state.alertPauseTimer = 0;
+    state.isIdle = false;
+    state.isDead = false;
+    state.advanceAfterIdle = true;
+    state.targetPosition.copy(PATROL_WAYPOINTS[state.currentWaypoint]);
+    state.lastKnownPlayerPos.set(0, 0, 0);
+    state.lastStimulusPos.set(0, 0, 0);
 
-  if (demonState.mesh) {
-    demonState.mesh.position.copy(DEMON_CONFIG.startPosition);
-    demonState.mesh.rotation.set(0, 0, 0);
-  }
+    if (state.mesh) {
+      state.mesh.position.copy(state.config.startPosition);
+      state.mesh.rotation.set(0, 0, 0);
+    }
 
-  updateEyeGlow();
+    updateEyeGlow(state);
+  });
 }
 
 export {
   alertDemon,
   getDemonPosition,
   getDemonState,
+  getDemonStates,
   huntPlayer,
   initDemon,
   lostPlayer,

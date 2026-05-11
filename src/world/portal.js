@@ -4,6 +4,7 @@ import { scene } from '../core/scene.js';
 import { getPlayerPosition } from '../systems/player.js';
 import { GameState, updateState } from '../systems/state.js';
 import { onInteract } from '../systems/input.js';
+import { playPortalPlantSound } from '../systems/audio.js';
 import { hidePickupPrompt, showPickupPrompt } from '../ui/overlay.js';
 import { startPlantSequence } from '../ui/plantUI.js';
 import { triggerWinScreen } from '../ui/endScreens.js';
@@ -528,6 +529,7 @@ function initPortal() {
 
     portalState.isPlanting = true;
     hidePickupPrompt();
+    playPortalPlantSound();
 
     const planted = await startPlantSequence();
 

@@ -5,6 +5,7 @@ import { openPauseMenu } from '../ui/pauseMenu.js';
 import { collisionObjects, getMallBounds } from '../world/environment.js';
 import { isKeyPressed, registerCrouchToggle } from './input.js';
 import { GameState, updateState } from './state.js';
+import { getCurrentDifficulty } from './difficulty.js';
 
 let canvas = null;
 let isLocked = false;
@@ -291,8 +292,10 @@ function updatePlayer(delta) {
   }
 
   if (playerState.isSprinting) {
+    const difficulty = getCurrentDifficulty();
+
     updateState({
-      fear: Math.min(100, GameState.fear + 0.15),
+      fear: Math.min(100, GameState.fear + 0.15 * difficulty.fearMultiplier),
       isHidden: false,
     });
   }

@@ -1,7 +1,13 @@
 import { updateState } from '../systems/state.js';
 import { startGameSystems } from '../main.js';
+import { resumeAudio } from '../systems/audio.js';
+import { cycleDifficulty, getCurrentDifficulty } from '../systems/difficulty.js';
+import {
+  getLeaderboardEntries,
+  getLeaderboardSourceLabel,
+} from '../systems/leaderboard.js';
 
-const MENU_OPTIONS = ['start', 'howto', 'credits'];
+const MENU_OPTIONS = ['start', 'difficulty', 'leaderboard', 'howto', 'credits'];
 const TAGLINE_TEXT = 'They came through the gate.';
 const TYPEWRITER_DELAY_MS = 30;
 
@@ -52,6 +58,43 @@ function updateMenuSelection() {
   });
 }
 
+function updateDifficultyOption() {
+  const optionText = document.querySelector('[data-option="difficulty"] .option-text');
+
+  if (optionText) {
+    optionText.textContent = `DIFFICULTY: ${getCurrentDifficulty().label}`;
+  }
+}
+
+async function renderLeaderboardSubscreen() {
+  const list = document.getElementById('leaderboard-list');
+  const source = document.getElementById('leaderboard-source');
+
+  if (!list || !source) {
+    return;
+  }
+
+  list.innerHTML = '<div class="leaderboard-empty">LOADING SIGNAL...</div>';
+
+  const entries = await getLeaderboardEntries();
+
+  source.textContent = `SOURCE: ${getLeaderboardSourceLabel()}`;
+
+  if (entries.length === 0) {
+    list.innerHTML = '<div class="leaderboard-empty">NO SURVIVORS RECORDED</div>';
+    return;
+  }
+
+  list.innerHTML = entries.map((entry, index) => `
+    <div class="leaderboard-row">
+      <span class="leaderboard-rank">${String(index + 1).padStart(2, '0')}</span>
+      <span class="leaderboard-name">${entry.name}</span>
+      <span class="leaderboard-score">${entry.score}</span>
+      <span class="leaderboard-meta">${entry.difficulty} / ${entry.outcome}</span>
+    </div>
+  `).join('');
+}
+
 function showSubscreen(name) {
   const nav = document.getElementById('menu-nav');
   const titleBlock = document.getElementById('menu-title-block');
@@ -65,6 +108,10 @@ function showSubscreen(name) {
   nav?.classList.add('hidden');
   titleBlock?.classList.add('hidden');
   subscreen.classList.add('active');
+
+  if (name === 'leaderboard') {
+    renderLeaderboardSubscreen();
+  }
 }
 
 function closeSubscreen() {
@@ -86,6 +133,12 @@ function triggerMenuOption() {
 
   if (option === 'start') {
     startGame();
+  } else if (option === 'difficulty') {
+    cycleDifficulty();
+    updateDifficultyOption();
+    updateMenuSelection();
+  } else if (option === 'leaderboard') {
+    showSubscreen('leaderboard');
   } else if (option === 'howto') {
     showSubscreen('howto');
   } else if (option === 'credits') {
@@ -146,6 +199,13 @@ function handleKeydown(event) {
     event.preventDefault();
     selectedIndex = (selectedIndex + 1) % MENU_OPTIONS.length;
     updateMenuSelection();
+  } else if (
+    (event.key === 'ArrowLeft' || event.key === 'ArrowRight')
+    && getSelectedOption()?.dataset.option === 'difficulty'
+  ) {
+    event.preventDefault();
+    cycleDifficulty(event.key === 'ArrowRight' ? 1 : -1);
+    updateDifficultyOption();
   } else if (event.key === 'Enter') {
     event.preventDefault();
     triggerMenuOption();
@@ -201,6 +261,16 @@ function initMainMenu() {
         <span class="option-text">START</span>
         <span class="option-bracket">]</span>
       </div>
+      <div class="menu-option" data-option="difficulty" tabindex="0">
+        <span class="option-bracket">[</span>
+        <span class="option-text">DIFFICULTY: NORMAL</span>
+        <span class="option-bracket">]</span>
+      </div>
+      <div class="menu-option" data-option="leaderboard" tabindex="0">
+        <span class="option-bracket">[</span>
+        <span class="option-text">LEADERBOARD</span>
+        <span class="option-bracket">]</span>
+      </div>
       <div class="menu-option" data-option="howto" tabindex="0">
         <span class="option-bracket">[</span>
         <span class="option-text">HOW TO PLAY</span>
@@ -250,6 +320,17 @@ function initMainMenu() {
       <div class="subscreen-back">[ ESC ] Back</div>
     </div>
 
+    <div id="menu-leaderboard" class="menu-subscreen">
+      <div class="subscreen-title">LEADERBOARD</div>
+      <div class="subscreen-content leaderboard-content">
+        <div id="leaderboard-source">SOURCE: LOCAL</div>
+        <div id="leaderboard-list">
+          <div class="leaderboard-empty">LOADING SIGNAL...</div>
+        </div>
+      </div>
+      <div class="subscreen-back">[ ESC ] Back</div>
+    </div>
+
     <div id="menu-credits" class="menu-subscreen">
       <div class="subscreen-title">CREDITS</div>
       <div class="subscreen-content">
@@ -276,6 +357,7 @@ function initMainMenu() {
 
   const hud = document.getElementById('hud');
   document.body.insertBefore(menu, hud ?? null);
+  updateDifficultyOption();
 
   return menu;
 }
@@ -299,6 +381,7 @@ function playEntryAnimation() {
   currentMenuState = 'MAIN';
   selectedIndex = 0;
   resetEntryAnimationState();
+  updateDifficultyOption();
 
   window.setTimeout(() => {
     scanlines?.classList.add('visible');
@@ -366,6 +449,7 @@ function startGame() {
   menuInteractive = false;
   currentMenuState = 'STARTING';
   menu.classList.add('faded-out');
+  resumeAudio();
 
   window.setTimeout(() => {
     menu.classList.add('hidden');
