@@ -21,6 +21,12 @@ import {
   openInspectOverlay,
   updateVignette,
 } from './ui/overlay.js';
+import {
+  closePauseMenu,
+  initPauseMenu,
+  openPauseMenu,
+  setupPauseNavigation,
+} from './ui/pauseMenu.js';
 import { initPlantUI, startPlantSequence } from './ui/plantUI.js';
 import { GameState } from './systems/state.js';
 import { onInspectHold, onInteract, onSlotSelect } from './systems/input.js';
@@ -40,12 +46,15 @@ setupMenuNavigation();
 playEntryAnimation();
 
 function animate() {
-  if (!GameState.isInspecting) {
+  if (!GameState.isInspecting && !GameState.isPaused) {
     updateStealthIndicator();
     updateFearMeter(GameState.fear);
   }
 
-  updateCompass();
+  if (!GameState.isPaused) {
+    updateCompass();
+  }
+
   updateVignette(GameState.fear);
   updateObjectiveTracker();
   renderer.render(scene, camera);
@@ -78,6 +87,8 @@ function startGameSystems() {
   initOverlay();
   initCompass();
   initPlantUI();
+  initPauseMenu();
+  setupPauseNavigation();
   bindGameInputHandlers();
 
   if (!animationLoopStarted) {
@@ -86,4 +97,4 @@ function startGameSystems() {
   }
 }
 
-export { GameState, startGameSystems };
+export { GameState, closePauseMenu, openPauseMenu, startGameSystems };

@@ -1,3 +1,5 @@
+import { GameState } from './state.js';
+
 const trackedKeys = new Set([
   'w',
   'a',
@@ -40,9 +42,30 @@ function setKeyState(event, isPressed) {
   keyboardState[key] = isPressed;
 }
 
+function isGameInputLocked() {
+  const pauseMenuActive = document.getElementById('pause-menu')?.classList.contains('active');
+
+  return GameState.isPaused || Boolean(pauseMenuActive);
+}
+
+// Clears all tracked key state after modal UI takes control.
+function resetKeyboardState() {
+  trackedKeys.forEach((key) => {
+    keyboardState[key] = false;
+  });
+}
+
 function handleKeydown(event) {
   const key = normalizeKey(event.key);
   const now = Date.now();
+
+  if (isGameInputLocked()) {
+    if (trackedKeys.has(key)) {
+      event.preventDefault();
+    }
+
+    return;
+  }
 
   setKeyState(event, true);
 
@@ -126,4 +149,11 @@ function onInspectHold(openCallback, closeCallback) {
   };
 }
 
-export { keyboardState, isKeyPressed, onInspectHold, onInteract, onSlotSelect };
+export {
+  keyboardState,
+  isKeyPressed,
+  onInspectHold,
+  onInteract,
+  onSlotSelect,
+  resetKeyboardState,
+};
