@@ -24,20 +24,12 @@ const ITEM_GLOW_COLORS = {
 };
 
 const STATIC_SPAWN_POSITIONS = {
-  FLASHLIGHT: new THREE.Vector3(0, 0.5, -34),
+  FLASHLIGHT: new THREE.Vector3(6, 0.5, 28),
   LIGHTER: new THREE.Vector3(12, 0.5, -25),
   RADIO: new THREE.Vector3(-18, 0.5, -33),
   ROPE: new THREE.Vector3(18, 0.5, 33),
   MEDKIT: new THREE.Vector3(8, 0.5, 5),
 };
-
-const FLASHLIGHT_HINT_LIGHTS = [
-  { position: new THREE.Vector3(0, 0.3, 10), intensity: 0.15, distance: 3 },
-  { position: new THREE.Vector3(0, 0.3, -8), intensity: 0.12, distance: 3 },
-  { position: new THREE.Vector3(0, 0.3, -20), intensity: 0.1, distance: 2 },
-];
-
-const flashlightHintLights = [];
 
 function createItemEmoji(emoji) {
   const canvas = document.createElement('canvas');
@@ -185,27 +177,6 @@ function clearWorldItems() {
   worldItems.length = 0;
   currentNearbyItem = null;
   hidePickupPrompt();
-  clearFlashlightHint();
-}
-
-function clearFlashlightHint() {
-  flashlightHintLights.forEach((light) => {
-    scene.remove(light);
-  });
-  flashlightHintLights.length = 0;
-}
-
-function addFlashlightHint() {
-  clearFlashlightHint();
-
-  FLASHLIGHT_HINT_LIGHTS.forEach((hint, index) => {
-    const light = new THREE.PointLight(0xffaa00, hint.intensity, hint.distance);
-
-    light.name = `FlashlightHintLight_${index + 1}`;
-    light.position.copy(hint.position);
-    scene.add(light);
-    flashlightHintLights.push(light);
-  });
 }
 
 function getExplosiveSpawnHistory() {
@@ -271,7 +242,6 @@ function initItemSpawns() {
   Object.entries(STATIC_SPAWN_POSITIONS).forEach(([itemName, position]) => {
     spawnItem(itemName, position);
   });
-  addFlashlightHint();
 
   if (!unregisterInteract) {
     unregisterInteract = onInteract(handleInteract);
@@ -358,7 +328,6 @@ function getExplosiveLocation() {
 export {
   ITEM_GLOW_COLORS,
   STATIC_SPAWN_POSITIONS,
-  addFlashlightHint,
   collectItem,
   getCurrentNearbyItem,
   getExplosiveLocation,
