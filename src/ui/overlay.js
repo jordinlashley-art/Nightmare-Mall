@@ -1,5 +1,5 @@
 import { GameState, ITEM_TYPES, updateState } from '../systems/state.js';
-import { incrementItemsFound } from './endScreens.js';
+import { collectItem } from '../world/items.js';
 
 let pickupHideTimeout = null;
 let inspectTypewriterInterval = null;
@@ -321,7 +321,7 @@ function triggerPickup(itemName) {
 
   GameState.inventory.push(itemName);
   updateState({ inventory: GameState.inventory });
-  incrementItemsFound();
+  collectItem(itemName);
 
   pickupPrompt.classList.remove('pickup-flash');
   void pickupPrompt.offsetWidth;

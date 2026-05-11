@@ -1,4 +1,5 @@
 import { GameState } from './state.js';
+import { getCurrentNearbyItem } from '../world/items.js';
 
 const trackedKeys = new Set([
   'w',
@@ -101,6 +102,7 @@ function handleKeydown(event) {
     || event.repeat
     || interactCallbacks.size === 0
     || now - lastInteractAt < INTERACT_DEBOUNCE_MS
+    || !getCurrentNearbyItem()
   ) {
     return;
   }
